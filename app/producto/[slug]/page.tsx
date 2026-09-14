@@ -3,21 +3,18 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AddToCart } from "@/components/add-to-cart";
 import { Mascot } from "@/components/mascot";
-import { ProductMock } from "@/components/product-mock";
-import { getProduct, getProducts } from "@/lib/products";
+import { ProductVisual } from "@/components/product-visual";
+import { getProduct } from "@/lib/products";
 import { formatPrice, kindLabel } from "@/lib/format";
 
 type Props = { params: Promise<{ slug: string }> };
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
   return { title: product?.name ?? "Producto" };
-}
-
-export async function generateStaticParams() {
-  const products = await getProducts();
-  return products.map((product) => ({ slug: product.slug }));
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -27,8 +24,14 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2">
-      <div className="rounded-[2rem] bg-mock p-8">
-        <ProductMock kind={product.kind} color={product.colors[0]} design={product.design} />
+      <div className="overflow-hidden rounded-[2rem] bg-mock">
+        {product.imageUrl ? (
+          <ProductVisual product={product} className="aspect-square w-full object-cover" />
+        ) : (
+          <div className="p-8">
+            <ProductVisual product={product} />
+          </div>
+        )}
       </div>
       <div>
         <Link href="/galeria" className="text-sm text-ink/50 hover:text-ink">

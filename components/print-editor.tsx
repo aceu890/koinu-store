@@ -13,8 +13,9 @@ import {
   widthFromHeight,
 } from "@/lib/measurements";
 import { isDarkHex } from "@/lib/color";
-import { getProductPhoto } from "@/lib/product-photos";
-import type { PrintPlacement, PrintPosition, PrintStamp, ProductKind } from "@/lib/types";
+import { getProductPhoto, getProductViews } from "@/lib/product-photos";
+import type { PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind } from "@/lib/types";
+import { sideLabel, sideTo } from "@/lib/format";
 
 type Handle = "move" | "nw" | "ne" | "sw" | "se";
 
@@ -23,11 +24,11 @@ type PrintEditorProps = {
   color: string;
   size: string | null;
   position: PrintPosition;
-  view: "front" | "back";
-  onViewChange?: (view: "front" | "back") => void;
+  view: PrintSide;
+  onViewChange?: (view: PrintSide) => void;
   stamps: PrintStamp[];
   selectedId: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string | null) => void;
   onStampPlacement: (id: string, placement: PrintPlacement) => void;
   text: string;
   textColor: string;
@@ -60,9 +61,10 @@ export function PrintEditor({
   const area = getPrintableArea(kind, view);
   const measures = getGarmentMeasures(kind, size);
   const dark = isDarkHex(color);
-  const canFlip = kind === "shirt" || kind === "hoodie";
+  const views = getProductViews(kind);
+  const canFlip = views.length > 1;
   const sideStamps = stamps.filter((stamp) => stamp.side === view);
-  const selected = sideStamps.find((stamp) => stamp.id === selectedId) ?? sideStamps[0] ?? null;
+  const selected = sideStamps.find((stamp) => stamp.id === selectedId) ?? null;
   const imageAspect = selected ? selected.widthPx / selected.heightPx : 1;
   const printCm = selected
     ? placementToCm(selected.placement, area, measures, kind)
@@ -177,6 +179,11 @@ export function PrintEditor({
     dragRef.current = null;
   }
 
+  function deselect() {
+    if (dragRef.current) return;
+    onSelect(null);
+  }
+
   const maxWidth = selected
     ? Math.min(area.width, widthFromHeight(area.height, imageAspect, stageAspect))
     : area.width;
@@ -187,30 +194,26 @@ export function PrintEditor({
   return (
     <div>
       {canFlip && onViewChange ? (
-        <div className="mb-3 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onViewChange("front")}
-            className={`rounded-full px-3 py-2 text-sm font-semibold ${
-              view === "front" ? "bg-on-panel text-panel" : "bg-white/10 text-on-panel/70"
-            }`}
-          >
-            Frente
-            {stamps.some((stamp) => stamp.side === "front") ? " · ✓" : ""}
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewChange("back")}
-            className={`rounded-full px-3 py-2 text-sm font-semibold ${
-              view === "back" ? "bg-on-panel text-panel" : "bg-white/10 text-on-panel/70"
-            }`}
-          >
-            Espalda
-            {stamps.some((stamp) => stamp.side === "back") ? " · ✓" : ""}
-          </button>
+        <div className={`mb-3 grid gap-2 ${views.length > 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
+          {views.map((side) => (
+            <button
+              key={side}
+              type="button"
+              onClick={() => onViewChange(side)}
+              className={`rounded-full px-3 py-2 text-sm font-semibold ${
+                view === side ? "bg-on-panel text-panel" : "bg-white/10 text-on-panel/70"
+              }`}
+            >
+              {sideLabel(side)}
+              {stamps.some((stamp) => stamp.side === side) ? " · ✓" : ""}
+            </button>
+          ))}
         </div>
       ) : null}
-      <div className="relative overflow-hidden rounded-[1.7rem] bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.14),transparent_40%),linear-gradient(180deg,#3a322c,#14110f)] select-none">
+      <div
+        className="relative overflow-hidden rounded-[1.7rem] bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.14),transparent_40%),linear-gradient(180deg,#3a322c,#14110f)] select-none"
+        onPointerDown={deselect}
+      >
         <div className="absolute inset-x-[12%] bottom-[6%] h-8 rounded-[100%] bg-black/45 blur-xl" />
         <div className="relative px-3 pb-5 pt-2">
           <div
@@ -278,6 +281,7 @@ export function PrintEditor({
                   >
                     {active ? (
                       <>
+                        <span className="pointer-events-none absolute inset-0 rounded-sm border border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]" />
                         {(["nw", "ne", "sw", "se"] as const).map((handle) => (
                           <button
                             key={handle}
@@ -301,9 +305,7 @@ export function PrintEditor({
                           </span>
                         ) : null}
                       </>
-                    ) : (
-                      <span className="absolute inset-0 rounded-sm border border-white/30" />
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -368,8 +370,10 @@ export function PrintEditor({
               <>
                 {formatCm(printCm.widthCm)} × {formatCm(printCm.heightCm).replace(" cm", "")}
               </>
+            ) : sideStamps.length ? (
+              "Tocá una imagen para editarla"
             ) : (
-              `Subí una imagen al ${view === "back" ? "espalda" : "frente"}`
+              `Subí una imagen en ${sideTo(view)}`
             )}
             {selected ? (
               <span className="mt-1 block text-[11px] font-normal text-on-panel/55">

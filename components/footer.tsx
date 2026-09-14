@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { Mascot } from "@/components/mascot";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
   return (
     <footer id="site-footer" className="relative z-40 mt-auto border-t border-on-panel/10 bg-panel text-on-panel">
       <div className="mx-auto grid max-w-6xl grid-cols-3 items-center gap-2 px-3 py-3.5 sm:gap-6 sm:px-6 sm:py-5">

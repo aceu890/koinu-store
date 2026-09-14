@@ -29,3 +29,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 4. Reiniciá `npm run dev`.
 
 Los pedidos se guardan en `orders` y `order_items`. Si las variables no están, el checkout igual confirma en modo local.
+
+## Dashboard
+
+Abrí [http://localhost:3000/admin](http://localhost:3000/admin).
+
+En local la contraseña por defecto es `koinu`. En producción definí `ADMIN_PASSWORD` en `.env.local`.
+
+Desde el dashboard podés:
+
+- Ver pedidos y cambiar el estado (pendiente, pagado, en producción, enviado, completado, cancelado)
+- Subir, editar y ocultar productos de la galería
+- Cargar fotos de producto
+
+Sin Supabase, pedidos y productos se guardan en `data/store.json`. Con Supabase, agregá también `SUPABASE_SERVICE_ROLE_KEY` para escribir en la base (estados y catálogo). Si el proyecto ya existía, ejecutá de nuevo `supabase/schema.sql` para sumar `image_url`.

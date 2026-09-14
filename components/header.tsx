@@ -20,6 +20,8 @@ export function Header() {
   const hydrated = useCartStore((state) => state.hydrated);
   const [open, setOpen] = useState(false);
 
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 sm:h-16 sm:px-6">

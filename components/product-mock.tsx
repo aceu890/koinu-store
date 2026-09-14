@@ -1,7 +1,7 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
 import { isDarkHex, mixHex } from "@/lib/color";
 import { getProductPhoto, getProductPhotoMeta } from "@/lib/product-photos";
-import type { DesignKey, PrintPlacement, PrintPosition, PrintStamp, ProductKind } from "@/lib/types";
+import type { DesignKey, PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind } from "@/lib/types";
 
 export type ProductMockProps = {
   kind: ProductKind;
@@ -16,7 +16,7 @@ export type ProductMockProps = {
   hidePrint?: boolean;
   placement?: PrintPlacement | null;
   stamps?: PrintStamp[];
-  view?: "front" | "back";
+  view?: PrintSide;
   children?: ReactNode;
 };
 
@@ -31,7 +31,7 @@ type Shade = {
 type LayerProps = {
   shade: Shade;
   uid: string;
-  view: "front" | "back";
+  view: PrintSide;
 };
 
 function shades(color: string): Shade {
@@ -669,7 +669,7 @@ export function ProductMock({
   const uid = useId().replace(/:/g, "");
   const shade = shades(color);
   const dark = isDarkHex(color);
-  const view: "front" | "back" =
+  const view: PrintSide =
     viewProp ?? (position === "back" ? "back" : "front");
   const layer = { shade, uid, view };
   const photo = getProductPhoto(kind, view);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Star } from "lucide-react";
-import { ProductMock } from "@/components/product-mock";
+import { ProductVisual } from "@/components/product-visual";
 import { Mascot } from "@/components/mascot";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/types";
@@ -21,11 +21,18 @@ export function ProductCard({ product }: { product: Product }) {
         <span className="absolute right-1.5 top-1.5 z-10 grid h-7 w-7 place-items-center rounded-full bg-ink/80 text-paper opacity-0 shadow transition duration-300 group-hover:opacity-100 sm:right-2.5 sm:top-2.5 sm:h-8 sm:w-8">
           <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </span>
-        <div className="flex h-full items-center justify-center p-2.5 transition duration-500 group-hover:scale-110 sm:p-5">
-          <div className="w-[82%] sm:w-[78%]">
-            <ProductMock kind={product.kind} color={product.colors[0]} design={product.design} />
+        {product.imageUrl ? (
+          <ProductVisual
+            product={product}
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center p-2.5 transition duration-500 group-hover:scale-110 sm:p-5">
+            <div className="w-[82%] sm:w-[78%]">
+              <ProductVisual product={product} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col px-2 py-2 sm:px-3.5 sm:py-3">
         <p className="hidden text-[10px] uppercase tracking-[0.16em] text-ink/40 sm:block">

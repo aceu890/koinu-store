@@ -7,7 +7,7 @@ import { ProductMock } from "@/components/product-mock";
 import { PrintEditor } from "@/components/print-editor";
 import { CUSTOMIZABLE_BASES } from "@/lib/catalog";
 import { useCartStore } from "@/lib/cart-store";
-import { formatPrice, kindLabel } from "@/lib/format";
+import { formatPrice, kindLabel, sideLabel, sideTo } from "@/lib/format";
 import {
   POSITION_PRESETS,
   SIZE_CHARTS,
@@ -19,7 +19,9 @@ import {
   getPrintableArea,
   placementToCm,
 } from "@/lib/measurements";
-import type { PrintPlacement, PrintPosition, PrintStamp, ProductKind } from "@/lib/types";
+import type { PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind } from "@/lib/types";
+import { PRINT_SIDES } from "@/lib/types";
+import { getProductViews } from "@/lib/product-photos";
 
 const STEPS = ["Producto", "Color y talle", "Diseño", "Listo"] as const;
 
@@ -41,7 +43,7 @@ export function CustomizeWizard() {
   const [text, setText] = useState("");
   const [textColor, setTextColor] = useState("#16120F");
   const [position, setPosition] = useState<PrintPosition>("center");
-  const [view, setView] = useState<"front" | "back">("front");
+  const [view, setView] = useState<PrintSide>("front");
   const [stamps, setStamps] = useState<PrintStamp[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
@@ -56,8 +58,10 @@ export function CustomizeWizard() {
   const measures = getGarmentMeasures(kind, size);
   const selected = stamps.find((stamp) => stamp.id === selectedId) ?? null;
   const sideStamps = stamps.filter((stamp) => stamp.side === view);
-  const frontCount = stamps.filter((stamp) => stamp.side === "front").length;
-  const backCount = stamps.filter((stamp) => stamp.side === "back").length;
+  const productViews = getProductViews(kind);
+  const sideCounts = Object.fromEntries(
+    PRINT_SIDES.map((side) => [side, stamps.filter((stamp) => stamp.side === side).length]),
+  ) as Record<PrintSide, number>;
   const printCm = selected
     ? placementToCm(
         selected.placement,
@@ -70,14 +74,16 @@ export function CustomizeWizard() {
   function makePlacement(
     aspect: number,
     nextKind: ProductKind,
-    nextView: "front" | "back",
+    nextView: PrintSide,
     nextPosition: PrintPosition,
     index: number,
   ): PrintPlacement {
     const preset =
       nextView === "back"
         ? POSITION_PRESETS[nextKind]?.back ?? getPrintableArea(nextKind, "back")
-        : (POSITION_PRESETS[nextKind]?.[nextPosition] ?? getPrintableArea(nextKind, "front"));
+        : nextView === "left" || nextView === "right"
+          ? getPrintableArea(nextKind, nextView)
+          : (POSITION_PRESETS[nextKind]?.[nextPosition] ?? getPrintableArea(nextKind, "front"));
     const fitted = fitPlacement(aspect, preset, containerAspect(nextKind, nextView));
     return clampPlacement(
       {
@@ -105,9 +111,13 @@ export function CustomizeWizard() {
     setStep(1);
   }
 
-  function selectView(nextView: "front" | "back") {
+  function selectView(nextView: PrintSide) {
     setView(nextView);
-    setPosition(nextView === "back" ? "back" : position === "back" ? "center" : position);
+    if (nextView === "back") {
+      setPosition("back");
+    } else if (position === "back") {
+      setPosition("center");
+    }
     const first = stamps.find((stamp) => stamp.side === nextView);
     setSelectedId(first?.id ?? null);
   }
@@ -244,9 +254,10 @@ export function CustomizeWizard() {
       return;
     }
 
-    const frontStamps = stamps.filter((stamp) => stamp.side === "front");
-    const backStamps = stamps.filter((stamp) => stamp.side === "back");
     const first = selected ?? stamps[0];
+    const printSides = PRINT_SIDES.filter((side) =>
+      stamps.some((stamp) => stamp.side === side),
+    );
 
     addItem({
       kind: "custom",
@@ -267,12 +278,11 @@ export function CustomizeWizard() {
         position: view === "back" ? "back" : position,
         artworkDataUrl: first?.artworkDataUrl ?? null,
         placement: first?.placement,
-        placementFront: frontStamps[0]?.placement,
-        placementBack: backStamps[0]?.placement,
-        printSides: [
-          ...(frontStamps.length ? (["front"] as const) : []),
-          ...(backStamps.length ? (["back"] as const) : []),
-        ],
+        placementFront: stamps.find((stamp) => stamp.side === "front")?.placement,
+        placementBack: stamps.find((stamp) => stamp.side === "back")?.placement,
+        placementLeft: stamps.find((stamp) => stamp.side === "left")?.placement,
+        placementRight: stamps.find((stamp) => stamp.side === "right")?.placement,
+        printSides,
         stamps,
         artworkWidthPx: first?.widthPx,
         artworkHeightPx: first?.heightPx,
@@ -411,12 +421,14 @@ export function CustomizeWizard() {
           <div>
             <h2 className="font-display text-2xl font-bold">Tu diseño</h2>
             <p className="mt-1 text-sm text-ink/60">
-              Frente y espalda usan fotos distintas. Podés sumar varias imágenes en cada cara y moverlas por separado.
+              {productViews.length > 2
+                ? "Frente, espalda y perfiles usan fotos distintas. Podés sumar varias imágenes en cada cara y moverlas por separado."
+                : "Frente y espalda usan fotos distintas. Podés sumar varias imágenes en cada cara y moverlas por separado."}
             </p>
             <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-ink/25 bg-paper/60 px-4 py-8 text-center hover:border-magenta">
               <Upload className="h-6 w-6 text-magenta" />
               <span className="mt-2 text-sm font-semibold">
-                Agregar imagen a {view === "back" ? "la espalda" : "el frente"}
+                Agregar imagen a {sideTo(view)}
               </span>
               <span className="mt-1 text-xs text-ink/50">PNG, JPG o WEBP · varias a la vez · máx. 8 MB c/u</span>
               <input
@@ -435,7 +447,7 @@ export function CustomizeWizard() {
               <div className="mt-4">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-bold uppercase tracking-wider text-ink/50">
-                    {view === "back" ? "Espalda" : "Frente"} · {sideStamps.length}{" "}
+                    {sideLabel(view)} · {sideStamps.length}{" "}
                     {sideStamps.length === 1 ? "imagen" : "imágenes"}
                   </p>
                   <button
@@ -500,28 +512,23 @@ export function CustomizeWizard() {
             <p className="mt-5 text-xs font-bold uppercase tracking-wider text-ink/50">
               Cara a estampar
             </p>
-            {(kind === "shirt" || kind === "hoodie") ? (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => selectView("front")}
-                  className={`rounded-full border px-3 py-2 text-sm font-semibold ${
-                    view === "front" ? "border-ink bg-ink text-paper" : "border-ink/15"
-                  }`}
-                >
-                  Frente
-                  {stamps.some((stamp) => stamp.side === "front") ? " · ✓" : ""}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => selectView("back")}
-                  className={`rounded-full border px-3 py-2 text-sm font-semibold ${
-                    view === "back" ? "border-ink bg-ink text-paper" : "border-ink/15"
-                  }`}
-                >
-                  Espalda
-                  {stamps.some((stamp) => stamp.side === "back") ? " · ✓" : ""}
-                </button>
+            {productViews.length > 1 ? (
+              <div
+                className={`mt-2 grid gap-2 ${productViews.length > 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}
+              >
+                {productViews.map((side) => (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => selectView(side)}
+                    className={`rounded-full border px-3 py-2 text-sm font-semibold ${
+                      view === side ? "border-ink bg-ink text-paper" : "border-ink/15"
+                    }`}
+                  >
+                    {sideLabel(side)}
+                    {stamps.some((stamp) => stamp.side === side) ? " · ✓" : ""}
+                  </button>
+                ))}
               </div>
             ) : null}
 
@@ -550,9 +557,9 @@ export function CustomizeWizard() {
             ) : null}
 
             <p className="mt-2 text-xs text-ink/50">
-              {view === "back"
-                ? "Estás viendo la espalda. Las fotos del frente no se copian: subí las de esta cara."
-                : "Arrastrá cada imagen y usá las esquinas para el tamaño. Después pasá a Espalda para estampar esa cara."}
+              {view === "front"
+                ? "Arrastrá cada imagen y usá las esquinas para el tamaño. Después pasá a otra cara para estamparla."
+                : `Estás viendo ${sideTo(view)}. Las fotos de las otras caras no se copian: subí las de esta cara.`}
             </p>
           </div>
         ) : null}
@@ -566,17 +573,19 @@ export function CustomizeWizard() {
                 Prenda: {formatCm(measures.widthCm)} ancho × {formatCm(measures.lengthCm).replace(" cm", "")} largo
               </li>
               <li>
-                Frente: {frontCount
-                  ? `${frontCount} ${frontCount === 1 ? "imagen" : "imágenes"}`
-                  : "sin estampa"}
-                {" · "}
-                espalda: {backCount
-                  ? `${backCount} ${backCount === 1 ? "imagen" : "imágenes"}`
-                  : "sin estampa"}
+                {productViews.map((side, index) => (
+                  <span key={side}>
+                    {index ? " · " : ""}
+                    {sideLabel(side)}:{" "}
+                    {sideCounts[side]
+                      ? `${sideCounts[side]} ${sideCounts[side] === 1 ? "imagen" : "imágenes"}`
+                      : "sin estampa"}
+                  </span>
+                ))}
               </li>
               <li>
-                {printCm
-                  ? `${selected?.side === "back" ? "Seleccionada (espalda)" : "Seleccionada (frente)"}: ${formatCm(printCm.widthCm)} × ${formatCm(printCm.heightCm).replace(" cm", "")}`
+                {printCm && selected
+                  ? `Seleccionada (${sideLabel(selected.side).toLowerCase()}): ${formatCm(printCm.widthCm)} × ${formatCm(printCm.heightCm).replace(" cm", "")}`
                   : availablePositions.find((item) => item.value === position)?.label}
               </li>
               {selected ? (
@@ -665,7 +674,10 @@ export function CustomizeWizard() {
           />
         </div>
         <p className="mt-4 text-center text-sm text-on-panel/60">
-          Arrastrá cada imagen y estirá las esquinas. Frente y espalda son fotos distintas.
+          Arrastrá cada imagen y estirá las esquinas.{" "}
+          {productViews.length > 2
+            ? "Frente, espalda y perfiles son fotos distintas."
+            : "Frente y espalda son fotos distintas."}
         </p>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildLocalOrder, saveLocalOrder } from "@/lib/admin-data";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { CartItem, CheckoutPayload } from "@/lib/types";
 
@@ -34,8 +35,10 @@ export async function POST(request: Request) {
   const supabase = await createServerSupabase();
 
   if (!supabase) {
+    const id = crypto.randomUUID();
+    await saveLocalOrder(buildLocalOrder(body, id, total));
     return NextResponse.json({
-      id: crypto.randomUUID(),
+      id,
       total,
       offline: true,
     });
@@ -97,5 +100,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
+  await saveLocalOrder(buildLocalOrder(body, order.id, total));
   return NextResponse.json({ id: order.id, total });
 }

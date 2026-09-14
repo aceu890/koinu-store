@@ -34,6 +34,11 @@ yarn-error.log*
 .env*
 !.env.example
 
+# admin local data and uploads
+/data/store.json
+/public/uploads/products/*
+!/public/uploads/products/.gitkeep
+
 # vercel
 .vercel
 

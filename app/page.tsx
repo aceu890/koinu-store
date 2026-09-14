@@ -22,6 +22,8 @@ import { formatPrice } from "@/lib/format";
 import { InstagramStrip } from "@/components/instagram-strip";
 import type { ProductKind } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 const BASE_ICONS: Record<ProductKind, typeof Shirt> = {
   shirt: Shirt,
   hoodie: Shirt,

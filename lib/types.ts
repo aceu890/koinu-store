@@ -26,6 +26,8 @@ export type Product = {
   colors: string[];
   sizes: string[];
   featured: boolean;
+  inStock?: boolean;
+  imageUrl?: string | null;
 };
 
 export type CustomizableBase = {
@@ -39,6 +41,10 @@ export type CustomizableBase = {
 
 export type PrintPosition = "chest" | "center" | "back" | "wrap";
 
+export type PrintSide = "front" | "back" | "left" | "right";
+
+export const PRINT_SIDES: PrintSide[] = ["front", "left", "back", "right"];
+
 export type PrintPlacement = {
   x: number;
   y: number;
@@ -48,7 +54,7 @@ export type PrintPlacement = {
 
 export type PrintStamp = {
   id: string;
-  side: "front" | "back";
+  side: PrintSide;
   artworkDataUrl: string;
   placement: PrintPlacement;
   widthPx: number;
@@ -67,7 +73,9 @@ export type CustomDetails = {
   placement?: PrintPlacement;
   placementFront?: PrintPlacement;
   placementBack?: PrintPlacement;
-  printSides?: Array<"front" | "back">;
+  placementLeft?: PrintPlacement;
+  placementRight?: PrintPlacement;
+  printSides?: PrintSide[];
   stamps?: PrintStamp[];
   artworkWidthPx?: number;
   artworkHeightPx?: number;
@@ -108,4 +116,45 @@ export type OrderRecord = {
   status: string;
   total: number;
   offline?: boolean;
+};
+
+export type OrderStatus =
+  | "pending"
+  | "paid"
+  | "in_production"
+  | "shipped"
+  | "completed"
+  | "cancelled";
+
+export const ORDER_STATUSES: OrderStatus[] = [
+  "pending",
+  "paid",
+  "in_production",
+  "shipped",
+  "completed",
+  "cancelled",
+];
+
+export type AdminOrderItem = {
+  id: string;
+  kind: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  details: Record<string, unknown>;
+};
+
+export type AdminOrder = {
+  id: string;
+  customerName: string;
+  email: string;
+  phone: string | null;
+  address: string;
+  city: string | null;
+  notes: string | null;
+  paymentMethod: string;
+  status: OrderStatus;
+  total: number;
+  createdAt: string;
+  items: AdminOrderItem[];
 };

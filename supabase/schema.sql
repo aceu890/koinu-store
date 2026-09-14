@@ -16,6 +16,7 @@ create table if not exists public.products (
   sizes text[] not null default '{}',
   featured boolean not null default false,
   in_stock boolean not null default true,
+  image_url text,
   created_at timestamptz not null default now()
 );
 
@@ -149,3 +150,6 @@ values
     7990, 'tazas', 'mug', 'team', array['#FFFFFF'], array[]::text[], false
   )
 on conflict (slug) do nothing;
+
+alter table public.products add column if not exists image_url text;
+

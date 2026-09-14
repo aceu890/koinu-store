@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Productos de sublimación y estampados ya listos.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function GalleryPage() {
   const products = await getProducts();
 

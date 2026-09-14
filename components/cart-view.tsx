@@ -4,36 +4,43 @@ import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Mascot } from "@/components/mascot";
 import { ProductMock } from "@/components/product-mock";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, sideLabel } from "@/lib/format";
 import { useCartStore, useCartTotal } from "@/lib/cart-store";
-import type { CartItem } from "@/lib/types";
+import type { CartItem, PrintPlacement, PrintSide } from "@/lib/types";
+import { PRINT_SIDES } from "@/lib/types";
 
-function cartPreviewSides(item: CartItem): Array<"front" | "back"> {
+function cartPreviewSides(item: CartItem): PrintSide[] {
   const stamps = item.custom?.stamps ?? [];
   const sides = item.custom?.printSides ?? [];
-  const front =
-    stamps.some((stamp) => stamp.side === "front") || sides.includes("front");
-  const back =
-    stamps.some((stamp) => stamp.side === "back") || sides.includes("back");
-  if (back && !front) return ["back"];
-  if (front && back) return ["front", "back"];
-  return ["front"];
+  const found = PRINT_SIDES.filter(
+    (side) => stamps.some((stamp) => stamp.side === side) || sides.includes(side),
+  );
+  return found.length ? found : ["front"];
 }
 
 function cartSidesLabel(item: CartItem) {
   const stamps = item.custom?.stamps ?? [];
-  const front = stamps.filter((stamp) => stamp.side === "front").length;
-  const back = stamps.filter((stamp) => stamp.side === "back").length;
-  if (front && back) {
-    return ` · ${front} al frente · ${back} en espalda`;
+  const parts = PRINT_SIDES.flatMap((side) => {
+    const count = stamps.filter((stamp) => stamp.side === side).length;
+    if (!count) return [];
+    const name = sideLabel(side).toLowerCase();
+    if (count === 1) return [name];
+    return [`${count} en ${name}`];
+  });
+  if (parts.length) return ` · ${parts.join(" · ")}`;
+  const sides = item.custom?.printSides ?? [];
+  if (sides.length > 1) {
+    return ` · ${sides.map((side) => sideLabel(side).toLowerCase()).join(" · ")}`;
   }
-  if (back) return back === 1 ? " · espalda" : ` · ${back} en espalda`;
-  if (front > 1) return ` · ${front} al frente`;
-  if (item.custom?.printSides?.includes("front") && item.custom.printSides.includes("back")) {
-    return " · frente y espalda";
-  }
-  if (item.custom?.printSides?.includes("back")) return " · espalda";
+  if (sides[0]) return ` · ${sideLabel(sides[0]).toLowerCase()}`;
   return "";
+}
+
+function placementForSide(item: CartItem, side: PrintSide): PrintPlacement | undefined {
+  if (side === "back") return item.custom?.placementBack ?? item.custom?.placement;
+  if (side === "left") return item.custom?.placementLeft ?? item.custom?.placement;
+  if (side === "right") return item.custom?.placementRight ?? item.custom?.placement;
+  return item.custom?.placementFront ?? item.custom?.placement;
 }
 
 export function CartView() {
@@ -85,7 +92,7 @@ export function CartView() {
             key={item.id}
             className="flex gap-4 rounded-3xl border border-ink/10 bg-surface/70 p-4"
           >
-            <div className="flex shrink-0 gap-1">
+            <div className="flex max-w-[11rem] shrink-0 flex-wrap gap-1">
               {cartPreviewSides(item).map((side) => (
                 <div key={side} className="h-28 w-20 rounded-2xl bg-mock px-1">
                   <ProductMock
@@ -98,11 +105,7 @@ export function CartView() {
                     view={side}
                     stamps={item.custom?.stamps}
                     artworkUrl={item.custom?.artworkDataUrl}
-                    placement={
-                      side === "back"
-                        ? item.custom?.placementBack ?? item.custom?.placement
-                        : item.custom?.placementFront ?? item.custom?.placement
-                    }
+                    placement={placementForSide(item, side)}
                   />
                 </div>
               ))}

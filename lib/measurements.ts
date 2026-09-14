@@ -1,5 +1,5 @@
 import { getProductPhotoMeta } from "@/lib/product-photos";
-import type { PrintPlacement, PrintPosition, ProductKind } from "@/lib/types";
+import type { PrintPlacement, PrintPosition, PrintSide, ProductKind } from "@/lib/types";
 
 export type { PrintPlacement };
 
@@ -50,7 +50,7 @@ export const SIZE_CHARTS: Record<ProductKind, GarmentMeasures[]> = {
 };
 
 export const PRINTABLE_AREA: Record<ProductKind, RectPct> = {
-  shirt: { left: 6, top: 2, width: 88, height: 96 },
+  shirt: { left: 16, top: 12, width: 68, height: 80 },
   hoodie: { left: 10, top: 8, width: 80, height: 88 },
   mug: { left: 29, top: 36, width: 32, height: 32 },
   tote: { left: 30, top: 42, width: 40, height: 34 },
@@ -59,17 +59,25 @@ export const PRINTABLE_AREA: Record<ProductKind, RectPct> = {
 };
 
 export const PRINTABLE_AREA_BACK: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 1, top: 1, width: 98, height: 97 },
+  shirt: { left: 16, top: 10, width: 68, height: 82 },
   hoodie: { left: 10, top: 6, width: 80, height: 90 },
+};
+
+export const PRINTABLE_AREA_LEFT: Partial<Record<ProductKind, RectPct>> = {
+  shirt: { left: 18, top: 14, width: 38, height: 76 },
+};
+
+export const PRINTABLE_AREA_RIGHT: Partial<Record<ProductKind, RectPct>> = {
+  shirt: { left: 40, top: 14, width: 38, height: 76 },
 };
 
 export function getPrintableArea(
   kind: ProductKind,
-  view: "front" | "back" = "front",
+  view: PrintSide = "front",
 ): RectPct {
-  if (view === "back") {
-    return PRINTABLE_AREA_BACK[kind] ?? PRINTABLE_AREA[kind];
-  }
+  if (view === "back") return PRINTABLE_AREA_BACK[kind] ?? PRINTABLE_AREA[kind];
+  if (view === "left") return PRINTABLE_AREA_LEFT[kind] ?? PRINTABLE_AREA[kind];
+  if (view === "right") return PRINTABLE_AREA_RIGHT[kind] ?? PRINTABLE_AREA[kind];
   return PRINTABLE_AREA[kind];
 }
 
@@ -110,7 +118,7 @@ export function getGarmentMeasures(kind: ProductKind, size: string | null) {
 
 export function containerAspect(
   kind: ProductKind,
-  view: "front" | "back" = "front",
+  view: PrintSide = "front",
 ) {
   const photo = getProductPhotoMeta(kind, view);
   if (photo) return photo.width / photo.height;
