@@ -1,26 +1,262 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f4efe6;
+  --ink: #16120f;
+  --surface: #fffcf7;
+  --mock: #efe7d8;
+  --panel: #16120f;
+  --on-panel: #f4efe6;
+  --magenta: #ff3d7f;
+  --magenta-dark: #d91a5c;
+  --teal: #0f766e;
+  --amber: #e8b86d;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  color-scheme: light;
+}
+
+html.dark {
+  --paper: #14110f;
+  --ink: #f3ece3;
+  --surface: #1e1a17;
+  --mock: #2a2420;
+  --panel: #0c0a09;
+  --on-panel: #f4efe6;
+  --magenta: #ff4d8a;
+  --magenta-dark: #ff7aa8;
+  --teal: #2dd4bf;
+  --amber: #f0c78a;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-mock: var(--mock);
+  --color-panel: var(--panel);
+  --color-on-panel: var(--on-panel);
+  --color-magenta: var(--magenta);
+  --color-magenta-dark: var(--magenta-dark);
+  --color-teal: var(--teal);
+  --color-amber: var(--amber);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-syne);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+a,
+button,
+summary,
+label,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="color"],
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.font-display {
+  font-family: var(--font-syne), var(--font-dm-sans), system-ui, sans-serif;
+}
+
+.noise {
+  background-image: radial-gradient(rgba(22, 18, 15, 0.05) 0.6px, transparent 0.6px);
+  background-size: 4px 4px;
+}
+
+html.dark .noise {
+  background-image: radial-gradient(rgba(243, 236, 227, 0.06) 0.6px, transparent 0.6px);
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(255, 61, 127, 0.5),
+      0 18px 40px rgba(255, 61, 127, 0.28);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 14px rgba(255, 61, 127, 0),
+      0 22px 48px rgba(255, 61, 127, 0.38);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-personaliza {
+  animation: glow-pulse 2.2s ease-in-out infinite;
+}
+
+.halftone {
+  background-image: radial-gradient(#16120f 0.7px, transparent 0.7px);
+  background-size: 7px 7px;
+  opacity: 0.12;
+}
+
+html.dark .halftone {
+  background-image: radial-gradient(#f3ece3 0.7px, transparent 0.7px);
+  opacity: 0.08;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]),
+textarea,
+select {
+  background-color: var(--surface);
+  color: inherit;
+}
+
+.print-art {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+}
+
+.print-light {
+  mix-blend-mode: multiply;
+}
+
+.print-dark {
+  mix-blend-mode: soft-light;
+  filter: contrast(1.08) saturate(1.05);
+}
+
+.print-shirt,
+.print-hoodie {
+  transform: perspective(460px) rotateX(7deg);
+}
+
+.mock-photo .print-shirt {
+  transform: perspective(800px) rotateX(2deg);
+}
+
+.print-mug {
+  transform: perspective(300px) rotateY(-12deg);
+  border-radius: 18% / 8%;
+}
+
+.print-wrap {
+  transform: perspective(240px) rotateY(-22deg) scaleX(1.08);
+  border-radius: 46% / 12%;
+}
+
+.print-tote {
+  transform: perspective(520px) rotateX(5deg);
+}
+
+.print-cap {
+  transform: perspective(220px) rotateX(-22deg);
+  border-radius: 50% 50% 18% 18% / 70% 70% 18% 18%;
+}
+
+@keyframes mascot-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2.4deg);
+  }
+}
+
+@keyframes sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mascot-welcome {
+  animation: mascot-float 3.4s ease-in-out infinite;
+  transform-origin: 50% 85%;
+  transition: filter 0.35s ease;
+}
+
+.group:hover .mascot-welcome {
+  animation-duration: 1.5s;
+  filter: drop-shadow(0 16px 28px rgba(255, 61, 127, 0.38));
+}
+
+.mascot-sparkle {
+  animation: sparkle-twinkle 1.8s ease-in-out infinite;
+}
+
+.mascot-sparkle-delay {
+  animation: sparkle-twinkle 1.8s ease-in-out 0.4s infinite;
+}
+
+.rise-grid > * {
+  animation: card-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.rise-grid > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.rise-grid > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.rise-grid > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.rise-grid > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.rise-grid > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.rise-grid > *:nth-child(6) {
+  animation-delay: 0.34s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-welcome,
+  .mascot-sparkle,
+  .mascot-sparkle-delay,
+  .rise-grid > * {
+    animation: none;
+  }
 }
