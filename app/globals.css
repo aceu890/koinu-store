@@ -109,6 +109,27 @@ html.dark .noise {
   }
 }
 
+.bg-personaliza,
+.btn-personaliza {
+  background-color: var(--magenta);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--magenta) 38%, white) 0%,
+    var(--magenta) 48%,
+    var(--magenta-dark) 100%
+  );
+}
+
+.bg-personaliza:hover,
+.btn-personaliza:hover {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--magenta) 52%, white) 0%,
+    var(--magenta) 42%,
+    var(--magenta-dark) 100%
+  );
+}
+
 .btn-personaliza {
   animation: glow-pulse 2.2s ease-in-out infinite;
 }
@@ -221,6 +242,18 @@ select {
   filter: drop-shadow(0 16px 28px rgba(255, 61, 127, 0.38));
 }
 
+.mascot-flow {
+  filter:
+    drop-shadow(0 14px 12px rgba(22, 18, 15, 0.2))
+    drop-shadow(0 4px 4px rgba(22, 18, 15, 0.14));
+}
+
+html.dark .mascot-flow {
+  filter:
+    drop-shadow(0 14px 14px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 4px 5px rgba(0, 0, 0, 0.28));
+}
+
 .mascot-sparkle {
   animation: sparkle-twinkle 1.8s ease-in-out infinite;
 }
@@ -252,11 +285,55 @@ select {
   animation-delay: 0.34s;
 }
 
+.nav-koinu {
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  background-color: transparent;
+  transition:
+    background-color 0.28s ease,
+    color 0.28s ease,
+    transform 0.28s ease,
+    box-shadow 0.28s ease;
+}
+
+.nav-koinu:hover,
+.nav-koinu[aria-current="page"] {
+  color: var(--ink);
+  background-color: var(--nav-pastel);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--nav-pastel) 55%, transparent);
+}
+
+.nav-koinu-letters span {
+  display: inline-block;
+  transition: transform 0.28s ease;
+}
+
+.nav-koinu:hover .nav-koinu-letters span {
+  animation: nav-letter-hop 0.42s ease both;
+  animation-delay: calc(var(--nav-i) * 28ms);
+}
+
+@keyframes nav-letter-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-3px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mascot-welcome,
   .mascot-sparkle,
   .mascot-sparkle-delay,
-  .rise-grid > * {
+  .rise-grid > *,
+  .nav-koinu:hover .nav-koinu-letters span {
     animation: none;
+  }
+
+  .nav-koinu:hover,
+  .nav-koinu[aria-current="page"] {
+    transform: none;
   }
 }

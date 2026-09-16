@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Mascot } from "@/components/mascot";
 
 export function BackToTop() {
+  const pathname = usePathname();
   const [show, setShow] = useState(false);
   const [bottom, setBottom] = useState(20);
 
@@ -11,14 +13,16 @@ export function BackToTop() {
     const footer = document.getElementById("site-footer");
 
     function update() {
+      const wizardOffset =
+        pathname.startsWith("/personalizar") && window.innerWidth < 1024 ? 88 : 20;
       setShow(window.scrollY > 480);
       if (!footer) {
-        setBottom(20);
+        setBottom(wizardOffset);
         return;
       }
       const rect = footer.getBoundingClientRect();
       const overlap = window.innerHeight - rect.top;
-      setBottom(overlap > 0 ? overlap + 12 : 20);
+      setBottom(overlap > 0 ? overlap + 12 : wizardOffset);
     }
 
     update();
@@ -28,7 +32,7 @@ export function BackToTop() {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, []);
+  }, [pathname]);
 
   if (!show) return null;
 

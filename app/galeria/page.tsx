@@ -20,7 +20,7 @@ export default async function GalleryPage() {
           <p className="text-[10px] uppercase tracking-[0.22em] text-ink/50 sm:text-xs">Catálogo</p>
           <h1 className="mt-1 font-display text-2xl font-bold sm:mt-2 sm:text-4xl">Galería de productos</h1>
           <p className="mt-2 max-w-xl text-sm text-ink/70 sm:mt-3 sm:text-base">
-            Piezas que ya salieron del taller. Si preferís algo único, usá Personaliza.
+            Piezas que ya salieron del taller. Si prefieres algo único, usa Personaliza.
           </p>
         </div>
         <div className="hidden w-36 sm:block">

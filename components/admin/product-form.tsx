@@ -140,7 +140,7 @@ export function ProductForm({ product }: Props) {
         </label>
         <label className="block">
           <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Precio (ARS)
+            Precio (CLP)
           </span>
           <input
             type="number"
@@ -210,7 +210,7 @@ export function ProductForm({ product }: Props) {
         </label>
         <label className="block">
           <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Talles (separados por coma)
+            Tallas (separadas por coma)
           </span>
           <input
             value={sizes}

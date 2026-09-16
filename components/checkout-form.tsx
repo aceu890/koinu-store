@@ -33,7 +33,7 @@ export function CheckoutForm() {
     };
 
     if (!payload.customerName || !payload.email || !payload.address) {
-      setError("Completá nombre, email y dirección.");
+      setError("Completa nombre, email y dirección.");
       return;
     }
 
@@ -81,7 +81,7 @@ export function CheckoutForm() {
         <div className="w-44">
           <Mascot name="keep-shopping-alt" alt="¡Sigue comprando!" size={260} />
         </div>
-        <p className="mt-3 text-ink/70">No hay productos para checkout. Volvé al carrito.</p>
+        <p className="mt-3 text-ink/70">No hay productos para checkout. Vuelve al carrito.</p>
       </div>
     );
   }

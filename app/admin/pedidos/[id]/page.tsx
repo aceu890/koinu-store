@@ -38,7 +38,7 @@ export default async function AdminOrderPage({ params }: Props) {
         </div>
         <div className="rounded-3xl border border-ink/10 bg-surface p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-ink/45">Pedido</p>
-          <p className="mt-2 text-sm">{new Date(order.createdAt).toLocaleString("es-AR")}</p>
+          <p className="mt-2 text-sm">{new Date(order.createdAt).toLocaleString("es-CL")}</p>
           <p className="text-sm">Pago: {paymentLabel(order.paymentMethod)}</p>
           <p className="mt-2 font-display text-2xl font-bold">{formatPrice(order.total)}</p>
           <div className="mt-4">
@@ -72,9 +72,9 @@ export default async function AdminOrderPage({ params }: Props) {
                       ? ` · ${kindLabel(String(details.productKind))}`
                       : ""}
                     {typeof details.size === "string" && details.size
-                      ? ` · talle ${details.size}`
+                      ? ` · talla ${details.size}`
                       : custom?.size
-                        ? ` · talle ${custom.size}`
+                        ? ` · talla ${custom.size}`
                         : ""}
                     {typeof details.colorName === "string" && details.colorName
                       ? ` · ${details.colorName}`

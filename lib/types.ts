@@ -45,6 +45,8 @@ export type PrintSide = "front" | "back" | "left" | "right";
 
 export const PRINT_SIDES: PrintSide[] = ["front", "left", "back", "right"];
 
+export const TEXT_LAYER_ID = "__text__";
+
 export type PrintPlacement = {
   x: number;
   y: number;
@@ -59,6 +61,7 @@ export type PrintStamp = {
   placement: PrintPlacement;
   widthPx: number;
   heightPx: number;
+  rotation?: number;
 };
 
 export type CustomDetails = {
@@ -68,6 +71,9 @@ export type CustomDetails = {
   size: string | null;
   text: string;
   textColor: string;
+  textFont?: string;
+  textScale?: number;
+  textPlacements?: Partial<Record<PrintSide, PrintPlacement>>;
   position: PrintPosition;
   artworkDataUrl: string | null;
   placement?: PrintPlacement;

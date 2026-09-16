@@ -1,7 +1,7 @@
 export function formatPrice(amount: number) {
-  return new Intl.NumberFormat("es-AR", {
+  return new Intl.NumberFormat("es-CL", {
     style: "currency",
-    currency: "ARS",
+    currency: "CLP",
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -9,7 +9,7 @@ export function formatPrice(amount: number) {
 export function kindLabel(kind: string) {
   const labels: Record<string, string> = {
     shirt: "Camiseta",
-    hoodie: "Buzo",
+    hoodie: "Polerón",
     mug: "Taza",
     tote: "Tote",
     cap: "Gorra",
@@ -48,6 +48,16 @@ export function orderStatusLabel(status: string) {
     cancelled: "Cancelado",
   };
   return labels[status] ?? status;
+}
+
+export function printTextFontSize(
+  scale = 100,
+  compact = false,
+  relative: "stage" | "box" = "stage",
+) {
+  const value = Math.min(220, Math.max(40, scale || 100));
+  const base = relative === "box" ? (compact ? 16 : 24) : compact ? 5 : 8;
+  return `${((value / 100) * base).toFixed(2)}cqw`;
 }
 
 export function slugify(value: string) {

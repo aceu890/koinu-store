@@ -48,9 +48,9 @@ export default async function ProductPage({ params }: Props) {
           <Mascot name="questions" alt="¿Tienes dudas? Escríbenos" size={200} />
         </div>
         <p className="mt-8 text-sm text-ink/55">
-          ¿Querés este mismo producto con otro texto o imagen?{" "}
+          ¿Quieres este mismo producto con otro texto o imagen?{" "}
           <Link href="/personalizar" className="font-semibold text-magenta">
-            Personalizalo
+            Personalízalo
           </Link>
           .
         </p>

@@ -3,15 +3,33 @@ import { ArrowUpRight, Star } from "lucide-react";
 import { ProductVisual } from "@/components/product-visual";
 import { Mascot } from "@/components/mascot";
 import { formatPrice } from "@/lib/format";
+import { pastelBackdrop, pastelFill } from "@/lib/pastels";
 import type { Product } from "@/lib/types";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  pastelIndex,
+  pastelMode = "gradient",
+}: {
+  product: Product;
+  pastelIndex?: number;
+  pastelMode?: "gradient" | "solid";
+}) {
   return (
     <Link
       href={`/producto/${product.slug}`}
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-ink/8 bg-surface shadow-[0_1px_2px_rgba(22,18,15,0.07)] transition duration-300 hover:-translate-y-1.5 hover:border-magenta hover:shadow-[0_14px_28px_rgba(255,61,127,0.16)] sm:rounded-2xl"
     >
-      <div className="relative aspect-square overflow-hidden bg-mock">
+      <div
+        className={`relative aspect-square overflow-hidden ${pastelIndex == null ? "bg-mock" : ""}`}
+        style={
+          pastelIndex == null
+            ? undefined
+            : pastelMode === "solid"
+              ? pastelFill(pastelIndex)
+              : pastelBackdrop(pastelIndex)
+        }
+      >
         {product.featured ? (
           <span className="absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full bg-ink px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-paper sm:left-2.5 sm:top-2.5 sm:px-2 sm:text-[10px]">
             <Star className="h-2.5 w-2.5 fill-amber text-amber sm:h-3 sm:w-3" />
@@ -49,7 +67,13 @@ export function ProductCard({ product }: { product: Product }) {
   );
 }
 
-export function ProductGrid({ products }: { products: Product[] }) {
+export function ProductGrid({
+  products,
+  pastel,
+}: {
+  products: Product[];
+  pastel?: boolean | "gradient" | "solid";
+}) {
   if (!products.length) {
     return (
       <div className="rounded-2xl border border-dashed border-ink/20 p-8 text-center sm:p-10">
@@ -61,10 +85,17 @@ export function ProductGrid({ products }: { products: Product[] }) {
     );
   }
 
+  const pastelMode = pastel === "solid" ? "solid" : pastel ? "gradient" : undefined;
+
   return (
     <div className="rise-grid grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products.map((product, index) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          pastelIndex={pastelMode ? index : undefined}
+          pastelMode={pastelMode}
+        />
       ))}
     </div>
   );

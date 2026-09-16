@@ -8,8 +8,14 @@ import { Mascot } from "@/components/mascot";
 export function Footer() {
   const pathname = usePathname();
   if (pathname.startsWith("/admin")) return null;
+  const hideOnMobile = pathname.startsWith("/personalizar");
   return (
-    <footer id="site-footer" className="relative z-40 mt-auto border-t border-on-panel/10 bg-panel text-on-panel">
+    <footer
+      id="site-footer"
+      className={`relative z-40 mt-auto border-t border-on-panel/10 bg-panel text-on-panel ${
+        hideOnMobile ? "hidden lg:block" : ""
+      }`}
+    >
       <div className="mx-auto grid max-w-6xl grid-cols-3 items-center gap-2 px-3 py-3.5 sm:gap-6 sm:px-6 sm:py-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2">

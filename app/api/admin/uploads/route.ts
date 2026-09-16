@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Subí una imagen" }, { status: 400 });
+    return NextResponse.json({ error: "Sube una imagen" }, { status: 400 });
   }
   if (file.size > 4 * 1024 * 1024) {
     return NextResponse.json({ error: "Máximo 4 MB" }, { status: 400 });
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   const ext = ALLOWED.get(file.type);
   if (!ext) {
-    return NextResponse.json({ error: "Usá JPG, PNG, WEBP o GIF" }, { status: 400 });
+    return NextResponse.json({ error: "Usa JPG, PNG, WEBP o GIF" }, { status: 400 });
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());

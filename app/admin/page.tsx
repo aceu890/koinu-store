@@ -64,7 +64,7 @@ export default async function AdminHomePage() {
       <h2 className="mt-10 font-display text-xl font-bold">Últimos pedidos</h2>
       {!stats.recentOrders.length ? (
         <p className="mt-3 text-sm text-ink/55">
-          Todavía no hay pedidos. Cuando alguien compre, aparecen acá.
+          Todavía no hay pedidos. Cuando alguien compre, aparecen aquí.
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-ink/10 overflow-hidden rounded-3xl border border-ink/10 bg-surface">
@@ -77,7 +77,7 @@ export default async function AdminHomePage() {
                 <div>
                   <p className="font-semibold">{order.customerName}</p>
                   <p className="text-xs text-ink/45">
-                    {new Date(order.createdAt).toLocaleString("es-AR")} · {order.items.length}{" "}
+                    {new Date(order.createdAt).toLocaleString("es-CL")} · {order.items.length}{" "}
                     {order.items.length === 1 ? "ítem" : "ítems"}
                   </p>
                 </div>

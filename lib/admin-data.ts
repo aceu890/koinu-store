@@ -209,7 +209,7 @@ export function parseProductInput(body: Record<string, unknown>): ProductInput {
 
   if (!name || !slug) throw new Error("Nombre y slug son obligatorios");
   if (!Number.isFinite(price) || price < 0) throw new Error("Precio inválido");
-  if (!category) throw new Error("Elegí una categoría");
+  if (!category) throw new Error("Elige una categoría");
   if (!KINDS.includes(kind)) throw new Error("Tipo de producto inválido");
   if (!DESIGNS.includes(design)) throw new Error("Diseño inválido");
 

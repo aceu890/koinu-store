@@ -31,7 +31,7 @@ export function AddToCart({ product }: { product: Product }) {
     <div className="mt-8">
       {product.sizes.length ? (
         <>
-          <p className="text-xs font-bold uppercase tracking-wider text-ink/50">Talle</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-ink/50">Talla</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {product.sizes.map((item) => (
               <button

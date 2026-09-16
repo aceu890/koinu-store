@@ -1,6 +1,8 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
 import { isDarkHex, mixHex } from "@/lib/color";
 import { getProductPhoto, getProductPhotoMeta } from "@/lib/product-photos";
+import { printTextFontSize } from "@/lib/format";
+import { printFontStyle } from "@/lib/print-fonts";
 import type { DesignKey, PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind } from "@/lib/types";
 
 export type ProductMockProps = {
@@ -9,14 +11,18 @@ export type ProductMockProps = {
   design?: DesignKey;
   text?: string;
   textColor?: string;
+  textFont?: string;
+  textScale?: number;
   position?: PrintPosition;
   artworkUrl?: string | null;
   className?: string;
   studio?: boolean;
+  fill?: boolean;
   hidePrint?: boolean;
   placement?: PrintPlacement | null;
   stamps?: PrintStamp[];
   view?: PrintSide;
+  textPlacement?: PrintPlacement | null;
   children?: ReactNode;
 };
 
@@ -55,7 +61,7 @@ function PrintSurface({
 }) {
   return (
     <div
-      className={`pointer-events-none absolute z-[1] flex items-center justify-center overflow-hidden ${className ?? ""}`}
+      className={`pointer-events-none absolute z-[1] flex items-center justify-center overflow-hidden [container-type:size] ${className ?? ""}`}
       style={style}
     >
       {children}
@@ -67,12 +73,16 @@ function DesignArt({
   design = "blank",
   text,
   textColor = "#111111",
+  textFont,
+  textScale = 100,
   artworkUrl,
   compact,
 }: {
   design?: DesignKey;
   text?: string;
   textColor?: string;
+  textFont?: string;
+  textScale?: number;
   artworkUrl?: string | null;
   compact?: boolean;
 }) {
@@ -90,8 +100,12 @@ function DesignArt({
   if (text) {
     return (
       <p
-        className={`max-w-full px-1 text-center font-display font-extrabold leading-[0.95] break-words ${compact ? "text-[9px]" : "text-[13px] sm:text-base"}`}
-        style={{ color: textColor }}
+        className="max-w-full px-1 text-center leading-[0.95] break-words"
+        style={{
+          color: textColor,
+          fontSize: printTextFontSize(textScale, compact, "box"),
+          ...printFontStyle(textFont),
+        }}
       >
         {text}
       </p>
@@ -587,7 +601,6 @@ function Print3dFinish({ shade }: LayerProps) {
 
 function PhotoGarment({ src, color }: { src: string; color: string }) {
   const mask: CSSProperties = {
-    backgroundColor: color,
     WebkitMaskImage: `url(${src})`,
     maskImage: `url(${src})`,
     WebkitMaskSize: "contain",
@@ -600,12 +613,13 @@ function PhotoGarment({ src, color }: { src: string; color: string }) {
 
   return (
     <div className="absolute inset-0">
-      <div className="absolute inset-0" style={mask} />
+      <div className="absolute inset-0" style={{ ...mask, backgroundColor: color }} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt=""
         className="absolute inset-0 h-full w-full object-contain mix-blend-multiply"
+        style={mask}
       />
     </div>
   );
@@ -619,34 +633,34 @@ const printBox: Record<ProductKind, Record<string, string>> = {
     wrap: "top-[34%] left-[31%] h-[38%] w-[38%]",
   },
   hoodie: {
-    chest: "top-[34%] left-[38%] h-[16%] w-[24%]",
-    center: "top-[36%] left-[33%] h-[24%] w-[34%]",
-    back: "top-[36%] left-[33%] h-[30%] w-[34%]",
-    wrap: "top-[36%] left-[33%] h-[24%] w-[34%]",
+    chest: "top-[24%] left-[35%] h-[18%] w-[30%]",
+    center: "top-[22%] left-[28%] h-[40%] w-[44%]",
+    back: "top-[28%] left-[22%] h-[50%] w-[56%]",
+    wrap: "top-[22%] left-[28%] h-[40%] w-[44%]",
   },
   mug: {
-    chest: "top-[38%] left-[32%] h-[26%] w-[26%]",
-    center: "top-[38%] left-[31%] h-[28%] w-[28%]",
-    back: "top-[38%] left-[31%] h-[28%] w-[28%]",
-    wrap: "top-[36%] left-[28%] h-[32%] w-[34%]",
+    chest: "top-[26%] left-[42%] h-[42%] w-[38%]",
+    center: "top-[26%] left-[42%] h-[42%] w-[38%]",
+    back: "top-[26%] left-[42%] h-[42%] w-[38%]",
+    wrap: "top-[22%] left-[38%] h-[56%] w-[50%]",
   },
   tote: {
-    chest: "top-[40%] left-[32%] h-[22%] w-[36%]",
-    center: "top-[42%] left-[30%] h-[34%] w-[40%]",
-    back: "top-[42%] left-[30%] h-[34%] w-[40%]",
-    wrap: "top-[42%] left-[30%] h-[34%] w-[40%]",
+    chest: "top-[42%] left-[28%] h-[40%] w-[44%]",
+    center: "top-[42%] left-[28%] h-[40%] w-[44%]",
+    back: "top-[42%] left-[28%] h-[40%] w-[44%]",
+    wrap: "top-[42%] left-[28%] h-[40%] w-[44%]",
   },
   cap: {
-    chest: "top-[28%] left-[38%] h-[16%] w-[24%]",
-    center: "top-[26%] left-[37%] h-[18%] w-[26%]",
-    back: "top-[26%] left-[37%] h-[18%] w-[26%]",
-    wrap: "top-[26%] left-[37%] h-[18%] w-[26%]",
+    chest: "top-[36%] left-[36%] h-[18%] w-[28%]",
+    center: "top-[34%] left-[34%] h-[22%] w-[32%]",
+    back: "top-[34%] left-[34%] h-[22%] w-[32%]",
+    wrap: "top-[34%] left-[34%] h-[22%] w-[32%]",
   },
   print3d: {
-    chest: "top-[44%] left-[34%] h-[32%] w-[32%]",
-    center: "top-[44%] left-[34%] h-[32%] w-[32%]",
-    back: "top-[44%] left-[34%] h-[32%] w-[32%]",
-    wrap: "top-[44%] left-[34%] h-[32%] w-[32%]",
+    chest: "top-[58%] left-[38%] h-[18%] w-[24%]",
+    center: "top-[58%] left-[38%] h-[18%] w-[24%]",
+    back: "top-[58%] left-[38%] h-[18%] w-[24%]",
+    wrap: "top-[58%] left-[38%] h-[18%] w-[24%]",
   },
 };
 
@@ -656,14 +670,18 @@ export function ProductMock({
   design = "blank",
   text,
   textColor,
+  textFont,
+  textScale = 100,
   position = "center",
   artworkUrl,
   className,
   studio,
+  fill,
   hidePrint,
   placement,
   stamps,
   view: viewProp,
+  textPlacement = null,
   children,
 }: ProductMockProps) {
   const uid = useId().replace(/:/g, "");
@@ -676,12 +694,13 @@ export function ProductMock({
   const photoMeta = getProductPhotoMeta(kind, view);
   const sideStamps = (stamps ?? []).filter((stamp) => stamp.side === view);
   const usingStamps = Array.isArray(stamps);
+  const textOnView = Boolean(text?.trim() && textPlacement);
   const hasPrint =
     !hidePrint &&
     Boolean(
       sideStamps.length ||
-        (!usingStamps && (artworkUrl || text || (design && design !== "blank"))) ||
-        (usingStamps && text && !sideStamps.length),
+        textOnView ||
+        (!usingStamps && (artworkUrl || text || (design && design !== "blank"))),
     );
   const printStyle: CSSProperties | undefined = placement
     ? {
@@ -694,9 +713,13 @@ export function ProductMock({
 
   return (
     <div
-      className={`relative isolate w-full ${photo ? "mock-photo" : "aspect-[7/8]"} ${className ?? ""}`}
+      className={`relative isolate ${
+        fill
+          ? "h-full w-full"
+          : `w-full ${photo ? "mock-photo" : "aspect-[7/8]"}`
+      } ${className ?? ""}`}
       style={
-        photoMeta
+        !fill && photoMeta
           ? { aspectRatio: `${photoMeta.width} / ${photoMeta.height}` }
           : undefined
       }
@@ -717,7 +740,7 @@ export function ProductMock({
         </svg>
       )}
 
-      {hasPrint && sideStamps.length ? (
+      {hasPrint && (sideStamps.length || textOnView) ? (
         <div
           className="pointer-events-none absolute inset-0 z-[1]"
           style={
@@ -744,6 +767,7 @@ export function ProductMock({
                 top: `${stamp.placement.y}%`,
                 width: `${stamp.placement.width}%`,
                 height: `${stamp.placement.height}%`,
+                transform: `rotate(${stamp.rotation ?? 0}deg)`,
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -754,6 +778,24 @@ export function ProductMock({
               />
             </div>
           ))}
+          {textOnView && textPlacement ? (
+            <div
+              className="absolute flex items-center justify-center [container-type:size]"
+              style={{
+                left: `${textPlacement.x}%`,
+                top: `${textPlacement.y}%`,
+                width: `${textPlacement.width}%`,
+                height: `${textPlacement.height}%`,
+              }}
+            >
+              <p
+                className="max-h-full max-w-full px-0.5 text-center leading-[0.95] break-words"
+                style={{ color: textColor, fontSize: "72cqh", ...printFontStyle(textFont) }}
+              >
+                {text}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : hasPrint ? (
         <PrintSurface
@@ -767,6 +809,8 @@ export function ProductMock({
               design={usingStamps ? "blank" : design}
               text={text}
               textColor={textColor}
+              textFont={textFont}
+              textScale={textScale}
               artworkUrl={usingStamps ? null : artworkUrl}
               compact={kind === "cap"}
             />
@@ -782,6 +826,16 @@ export function ProductMock({
           src={photo}
           alt=""
           className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-contain mix-blend-multiply opacity-40"
+          style={{
+            WebkitMaskImage: `url(${photo})`,
+            maskImage: `url(${photo})`,
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+          }}
         />
       ) : (
         <svg viewBox="0 0 280 320" className="pointer-events-none absolute inset-0 z-[2] h-full w-full overflow-visible">
@@ -794,7 +848,7 @@ export function ProductMock({
         </svg>
       )}
 
-      {studio ? (
+      {studio && !fill ? (
         <div className="pointer-events-none absolute inset-0 z-[3] bg-[radial-gradient(circle_at_30%_18%,rgba(255,255,255,0.14),transparent_36%)]" />
       ) : null}
     </div>

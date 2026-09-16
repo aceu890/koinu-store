@@ -70,7 +70,7 @@ export function OrdersTable({ orders }: { orders: AdminOrder[] }) {
                     <p className="text-xs text-ink/45">{order.email}</p>
                   </td>
                   <td className="px-4 py-3 text-ink/70">
-                    {new Date(order.createdAt).toLocaleString("es-AR")}
+                    {new Date(order.createdAt).toLocaleString("es-CL")}
                   </td>
                   <td className="px-4 py-3">{paymentLabel(order.paymentMethod)}</td>
                   <td className="px-4 py-3">

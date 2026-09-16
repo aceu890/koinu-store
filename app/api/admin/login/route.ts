@@ -10,7 +10,7 @@ import {
 export async function POST(request: Request) {
   if (!getAdminPassword()) {
     return NextResponse.json(
-      { error: "Configurá ADMIN_PASSWORD en el servidor." },
+      { error: "Configura ADMIN_PASSWORD en el servidor." },
       { status: 500 },
     );
   }

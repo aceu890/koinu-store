@@ -2,17 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PASTELS } from "@/lib/pastels";
 import { useCartCount, useCartStore } from "@/lib/cart-store";
 
 const links = [
-  { href: "/", label: "Inicio" },
-  { href: "/personalizar", label: "Personalizar" },
-  { href: "/galeria", label: "Galería" },
-];
+  { href: "/", label: "Inicio", pastel: 0 },
+  { href: "/personalizar", label: "Personalizar", pastel: 2 },
+  { href: "/galeria", label: "Galería", pastel: 4 },
+] as const;
+
+function NavLetters({ label }: { label: string }) {
+  return (
+    <span className="nav-koinu-letters">
+      {Array.from(label).map((letter, index) => (
+        <span
+          key={`${letter}-${index}`}
+          style={{ "--nav-i": index } as CSSProperties}
+        >
+          {letter === " " ? "\u00a0" : letter}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -37,18 +54,23 @@ export function Header() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm font-medium transition ${
-                pathname === link.href ? "text-magenta" : "text-ink/70 hover:text-ink"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden min-w-0 flex-1 justify-center px-4 md:flex">
+          <div className="grid w-full max-w-lg grid-cols-3 gap-1.5">
+            {links.map((link) => {
+              const current = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={current ? "page" : undefined}
+                  className="nav-koinu grid h-10 min-w-0 place-items-center rounded-full px-2 text-center font-display text-[13px] font-bold tracking-tight sm:text-sm"
+                  style={{ "--nav-pastel": PASTELS[link.pastel] } as CSSProperties}
+                >
+                  <NavLetters label={link.label} />
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -78,17 +100,22 @@ export function Header() {
       </div>
 
       {open ? (
-        <nav className="border-t border-ink/10 bg-paper px-4 py-3 md:hidden">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block py-2 text-sm font-medium"
-              onClick={() => setOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="grid grid-cols-3 gap-1.5 border-t border-ink/10 bg-paper px-3 py-3 md:hidden">
+          {links.map((link) => {
+            const current = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={current ? "page" : undefined}
+                className="nav-koinu grid h-10 min-w-0 place-items-center rounded-full px-1 text-center font-display text-[11px] font-bold tracking-tight"
+                style={{ "--nav-pastel": PASTELS[link.pastel] } as CSSProperties}
+                onClick={() => setOpen(false)}
+              >
+                <NavLetters label={link.label} />
+              </Link>
+            );
+          })}
         </nav>
       ) : null}
     </header>

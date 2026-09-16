@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BringToFront, RotateCw, SendToBack, Trash2 } from "lucide-react";
 import { ProductMock } from "@/components/product-mock";
 import {
   getPrintableArea,
+  clampBox,
   clampPlacement,
   formatCm,
   getGarmentMeasures,
@@ -13,11 +15,23 @@ import {
   widthFromHeight,
 } from "@/lib/measurements";
 import { isDarkHex } from "@/lib/color";
-import { getProductPhoto, getProductViews } from "@/lib/product-photos";
+import {
+  getPhotoAspect,
+  getPreviewFrameAspect,
+  getProductPhoto,
+  getProductViews,
+} from "@/lib/product-photos";
 import type { PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind } from "@/lib/types";
+import { TEXT_LAYER_ID } from "@/lib/types";
+import { printFontStyle } from "@/lib/print-fonts";
 import { sideLabel, sideTo } from "@/lib/format";
+import { STICKER_DRAG_TYPE, getLibrarySticker, type LibrarySticker } from "@/lib/sticker-library";
 
-type Handle = "move" | "nw" | "ne" | "sw" | "se";
+type Handle = "move" | "nw" | "ne" | "sw" | "se" | "rotate";
+
+function normalizeRotation(degrees: number) {
+  return ((Math.round(degrees) % 360) + 360) % 360;
+}
 
 type PrintEditorProps = {
   kind: ProductKind;
@@ -30,8 +44,17 @@ type PrintEditorProps = {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onStampPlacement: (id: string, placement: PrintPlacement) => void;
+  onStampRotate?: (id: string, rotation: number) => void;
+  onStampRemove?: (id: string) => void;
+  onStampLayer?: (id: string, direction: "forward" | "backward") => void;
   text: string;
   textColor: string;
+  textFont?: string;
+  textPlacement?: PrintPlacement | null;
+  textSides?: PrintSide[];
+  onTextPlacement?: (placement: PrintPlacement) => void;
+  onStickerDrop?: (sticker: LibrarySticker, point: { x: number; y: number }) => void;
+  stageClassName?: string;
 };
 
 export function PrintEditor({
@@ -45,33 +68,55 @@ export function PrintEditor({
   selectedId,
   onSelect,
   onStampPlacement,
+  onStampRotate,
+  onStampRemove,
+  onStampLayer,
   text,
   textColor,
+  textFont,
+  textPlacement = null,
+  textSides = [],
+  onTextPlacement,
+  onStickerDrop,
+  stageClassName,
 }: PrintEditorProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     handle: Handle;
-    stampId: string;
+    id: string;
     startX: number;
     startY: number;
     origin: PrintPlacement;
-    aspect: number;
+    aspect: number | null;
+    originRotation: number;
+    didDrag: boolean;
   } | null>(null);
   const [stageAspect, setStageAspect] = useState(1);
+  const [dropActive, setDropActive] = useState(false);
   const area = getPrintableArea(kind, view);
   const measures = getGarmentMeasures(kind, size);
   const dark = isDarkHex(color);
   const views = getProductViews(kind);
   const canFlip = views.length > 1;
   const sideStamps = stamps.filter((stamp) => stamp.side === view);
-  const selected = sideStamps.find((stamp) => stamp.id === selectedId) ?? null;
+  const textActive = selectedId === TEXT_LAYER_ID && Boolean(text.trim() && textPlacement);
+  const selected = textActive ? null : sideStamps.find((stamp) => stamp.id === selectedId) ?? null;
   const imageAspect = selected ? selected.widthPx / selected.heightPx : 1;
   const printCm = selected
     ? placementToCm(selected.placement, area, measures, kind)
-    : null;
+    : textActive && textPlacement
+      ? placementToCm(textPlacement, area, measures, kind)
+      : null;
   const dpi =
     selected && printCm ? printDpi(selected.widthPx, printCm.widthCm) : null;
   const garmentPhoto = getProductPhoto(kind, view);
+  const frameAspect = getPreviewFrameAspect(kind);
+  const photoAspect = getPhotoAspect(kind, view);
+  const stageWidthPct = Math.min(100, (photoAspect / frameAspect) * 100);
+  const stageStyle = {
+    width: `${stageWidthPct}%`,
+    aspectRatio: `${photoAspect}`,
+  };
   const garmentMask = garmentPhoto
     ? {
         WebkitMaskImage: `url(${garmentPhoto})`,
@@ -108,23 +153,92 @@ export function PrintEditor({
     };
   }
 
+  function isStickerDrag(event: React.DragEvent) {
+    return Array.from(event.dataTransfer.types).some(
+      (type) => type === STICKER_DRAG_TYPE || type === "text/plain",
+    );
+  }
+
+  function parseDroppedSticker(event: React.DragEvent): LibrarySticker | null {
+    const raw = event.dataTransfer.getData(STICKER_DRAG_TYPE);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as LibrarySticker;
+        if (parsed?.id && parsed.src) return parsed;
+      } catch {
+        return null;
+      }
+    }
+    const id = event.dataTransfer.getData("text/plain");
+    return id ? getLibrarySticker(id) : null;
+  }
+
+  function onStickerDragOver(event: React.DragEvent) {
+    if (!onStickerDrop || !isStickerDrag(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setDropActive(true);
+  }
+
+  function onStickerDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+    setDropActive(false);
+  }
+
+  function handleStickerDrop(event: React.DragEvent) {
+    if (!onStickerDrop) return;
+    event.preventDefault();
+    setDropActive(false);
+    const sticker = parseDroppedSticker(event);
+    if (!sticker || !stageRef.current) return;
+    onStickerDrop(sticker, clientToPct(event.clientX, event.clientY));
+  }
+
+  function commitPlacement(id: string, next: PrintPlacement) {
+    if (id === TEXT_LAYER_ID) {
+      onTextPlacement?.(next);
+      return;
+    }
+    onStampPlacement(id, next);
+  }
+
+  function onLayerPointerDown(
+    event: React.PointerEvent,
+    handle: Handle,
+    id: string,
+    placement: PrintPlacement,
+    aspect: number | null,
+    originRotation = 0,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    onSelect(id);
+    stageRef.current?.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      handle,
+      id,
+      startX: event.clientX,
+      startY: event.clientY,
+      origin: placement,
+      aspect,
+      originRotation,
+      didDrag: false,
+    };
+  }
+
   function onPointerDown(
     event: React.PointerEvent,
     handle: Handle,
     stamp: PrintStamp,
   ) {
-    event.preventDefault();
-    event.stopPropagation();
-    onSelect(stamp.id);
-    stageRef.current?.setPointerCapture(event.pointerId);
-    dragRef.current = {
+    onLayerPointerDown(
+      event,
       handle,
-      stampId: stamp.id,
-      startX: event.clientX,
-      startY: event.clientY,
-      origin: stamp.placement,
-      aspect: stamp.widthPx / stamp.heightPx,
-    };
+      stamp.id,
+      stamp.placement,
+      stamp.widthPx / stamp.heightPx,
+      stamp.rotation ?? 0,
+    );
   }
 
   function onPointerMove(event: React.PointerEvent) {
@@ -135,17 +249,27 @@ export function PrintEditor({
     const dx = ((event.clientX - drag.startX) / box.width) * 100;
     const dy = ((event.clientY - drag.startY) / box.height) * 100;
     const origin = drag.origin;
-    const aspect = drag.aspect;
+
+    if (drag.handle === "rotate") {
+      const dist = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+      if (dist < 8) return;
+      drag.didDrag = true;
+      const centerX = box.left + ((origin.x + origin.width / 2) / 100) * box.width;
+      const centerY = box.top + ((origin.y + origin.height / 2) / 100) * box.height;
+      const startAngle = Math.atan2(drag.startY - centerY, drag.startX - centerX);
+      const nextAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+      const degrees = drag.originRotation + ((nextAngle - startAngle) * 180) / Math.PI;
+      onStampRotate?.(drag.id, normalizeRotation(degrees));
+      return;
+    }
 
     if (drag.handle === "move") {
-      onStampPlacement(
-        drag.stampId,
-        clampPlacement(
-          { ...origin, x: origin.x + dx, y: origin.y + dy },
-          area,
-          aspect,
-          stageAspect,
-        ),
+      const moved = { ...origin, x: origin.x + dx, y: origin.y + dy };
+      commitPlacement(
+        drag.id,
+        drag.aspect == null
+          ? clampBox(moved, area)
+          : clampPlacement(moved, area, drag.aspect, stageAspect),
       );
       return;
     }
@@ -158,6 +282,16 @@ export function PrintEditor({
       nw: { x: origin.x + origin.width, y: origin.y + origin.height },
     }[drag.handle];
 
+    if (drag.aspect == null) {
+      const width = Math.max(8, Math.abs(pointer.x - fixed.x));
+      const height = Math.max(5, Math.abs(pointer.y - fixed.y));
+      const x = pointer.x < fixed.x ? fixed.x - width : fixed.x;
+      const y = pointer.y < fixed.y ? fixed.y - height : fixed.y;
+      commitPlacement(drag.id, clampBox({ x, y, width, height }, area));
+      return;
+    }
+
+    const aspect = drag.aspect;
     let width = Math.abs(pointer.x - fixed.x);
     let height = heightFromWidth(width, aspect, stageAspect);
 
@@ -169,13 +303,17 @@ export function PrintEditor({
     const x = pointer.x < fixed.x ? fixed.x - width : fixed.x;
     const y = pointer.y < fixed.y ? fixed.y - height : fixed.y;
 
-    onStampPlacement(
-      drag.stampId,
+    commitPlacement(
+      drag.id,
       clampPlacement({ x, y, width, height }, area, aspect, stageAspect),
     );
   }
 
   function onPointerUp() {
+    const drag = dragRef.current;
+    if (drag?.handle === "rotate" && !drag.didDrag) {
+      onStampRotate?.(drag.id, normalizeRotation(drag.originRotation + 15));
+    }
     dragRef.current = null;
   }
 
@@ -194,35 +332,49 @@ export function PrintEditor({
   return (
     <div>
       {canFlip && onViewChange ? (
-        <div className={`mb-3 grid gap-2 ${views.length > 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
+        <div className={`mb-2 grid gap-1 sm:mb-3 sm:gap-2 ${views.length > 2 ? "grid-cols-4" : "grid-cols-2"}`}>
           {views.map((side) => (
             <button
               key={side}
               type="button"
               onClick={() => onViewChange(side)}
-              className={`rounded-full px-3 py-2 text-sm font-semibold ${
+              className={`grid h-9 min-w-0 place-items-center rounded-full px-1 text-[11px] font-semibold touch-manipulation sm:h-10 sm:px-2 sm:text-sm ${
                 view === side ? "bg-on-panel text-panel" : "bg-white/10 text-on-panel/70"
               }`}
             >
-              {sideLabel(side)}
-              {stamps.some((stamp) => stamp.side === side) ? " · ✓" : ""}
+              {side === "left" ? "Izq." : side === "right" ? "Der." : sideLabel(side)}
+              {stamps.some((stamp) => stamp.side === side) || textSides.includes(side)
+                ? " · ✓"
+                : ""}
             </button>
           ))}
         </div>
       ) : null}
       <div
-        className="relative overflow-hidden rounded-[1.7rem] bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.14),transparent_40%),linear-gradient(180deg,#3a322c,#14110f)] select-none"
+        className={`relative overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_50%_28%,rgba(255,236,210,0.16),transparent_46%),linear-gradient(180deg,#3a322c_0%,#1c1815_58%,#12100e_100%)] select-none sm:rounded-[1.7rem] ${
+          dropActive ? "ring-2 ring-magenta ring-offset-2 ring-offset-[#1c1815]" : ""
+        }`}
         onPointerDown={deselect}
+        onDragOver={onStickerDragOver}
+        onDragEnter={onStickerDragOver}
+        onDragLeave={onStickerDragLeave}
+        onDrop={handleStickerDrop}
       >
         <div className="absolute inset-x-[12%] bottom-[6%] h-8 rounded-[100%] bg-black/45 blur-xl" />
-        <div className="relative px-3 pb-5 pt-2">
+        <div className="relative px-2 pb-4 pt-2 sm:px-3 sm:pb-5 sm:pt-2">
           <div
-            ref={stageRef}
-            className="relative"
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            className={`relative w-full ${stageClassName ?? ""}`}
+            style={{ aspectRatio: `${frameAspect}` }}
           >
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                ref={stageRef}
+                className="relative"
+                style={stageStyle}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+              >
             <ProductMock
               kind={kind}
               color={color}
@@ -230,9 +382,10 @@ export function PrintEditor({
               view={view}
               hidePrint
               studio
+              fill
             >
               <div
-                className="pointer-events-none absolute inset-0 z-[5]"
+                className="pointer-events-none absolute inset-0 z-[5] [container-type:size]"
                 style={garmentMask}
               >
                 {sideStamps.map((stamp) => (
@@ -244,6 +397,7 @@ export function PrintEditor({
                       top: `${stamp.placement.y}%`,
                       width: `${stamp.placement.width}%`,
                       height: `${stamp.placement.height}%`,
+                      transform: `rotate(${stamp.rotation ?? 0}deg)`,
                     }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -255,27 +409,94 @@ export function PrintEditor({
                     />
                   </div>
                 ))}
-                {text && !sideStamps.length ? (
-                  <p
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center font-display text-sm font-extrabold"
-                    style={{ color: textColor }}
+                {text.trim() && textPlacement ? (
+                  <div
+                    className="absolute flex items-center justify-center [container-type:size]"
+                    style={{
+                      left: `${textPlacement.x}%`,
+                      top: `${textPlacement.y}%`,
+                      width: `${textPlacement.width}%`,
+                      height: `${textPlacement.height}%`,
+                    }}
                   >
-                    {text}
-                  </p>
+                    <p
+                      className="max-h-full max-w-full px-0.5 text-center leading-[0.95] break-words"
+                      style={{
+                        color: textColor,
+                        fontSize: "72cqh",
+                        ...printFontStyle(textFont),
+                      }}
+                    >
+                      {text}
+                    </p>
+                  </div>
                 ) : null}
               </div>
 
-              {sideStamps.map((stamp) => {
+              {text.trim() && textPlacement ? (
+                <div
+                  className={`absolute z-[6] touch-none ${
+                    textActive ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                  }`}
+                  style={{
+                    left: `${textPlacement.x}%`,
+                    top: `${textPlacement.y}%`,
+                    width: `${textPlacement.width}%`,
+                    height: `${textPlacement.height}%`,
+                  }}
+                  onPointerDown={(event) =>
+                    onLayerPointerDown(event, "move", TEXT_LAYER_ID, textPlacement, null)
+                  }
+                >
+                  {textActive ? (
+                    <>
+                      <span className="pointer-events-none absolute inset-0 rounded-sm border border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]" />
+                      {(["nw", "ne", "sw", "se"] as const).map((handle) => (
+                        <button
+                          key={handle}
+                          type="button"
+                          aria-label="Cambiar tamaño del texto"
+                          className={`absolute z-[7] h-5 w-5 rounded-sm border-2 border-white bg-magenta shadow sm:h-3.5 sm:w-3.5 ${
+                            handle === "nw"
+                              ? "-left-2 -top-2 cursor-nwse-resize sm:-left-1.5 sm:-top-1.5"
+                              : handle === "ne"
+                                ? "-right-2 -top-2 cursor-nesw-resize sm:-right-1.5 sm:-top-1.5"
+                                : handle === "sw"
+                                  ? "-left-2 -bottom-2 cursor-nesw-resize sm:-left-1.5 sm:-bottom-1.5"
+                                  : "-right-2 -bottom-2 cursor-nwse-resize sm:-right-1.5 sm:-bottom-1.5"
+                          }`}
+                          onPointerDown={(event) =>
+                            onLayerPointerDown(event, handle, TEXT_LAYER_ID, textPlacement, null)
+                          }
+                        />
+                      ))}
+                      {printCm ? (
+                        <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-panel/90 px-2 py-0.5 text-[10px] font-semibold text-on-panel">
+                          {formatCm(printCm.widthCm)} × {formatCm(printCm.heightCm).replace(" cm", "")}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {sideStamps.map((stamp, index) => {
                 const active = selected?.id === stamp.id;
+                const rotation = stamp.rotation ?? 0;
+                const canBackward = index > 0;
+                const canForward = index < sideStamps.length - 1;
                 return (
                   <div
                     key={stamp.id}
-                    className={`absolute z-[6] touch-none ${active ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+                    className={`absolute touch-none ${
+                      active ? "z-[9] cursor-grab active:cursor-grabbing" : "z-[6] cursor-pointer"
+                    }`}
                     style={{
                       left: `${stamp.placement.x}%`,
                       top: `${stamp.placement.y}%`,
                       width: `${stamp.placement.width}%`,
                       height: `${stamp.placement.height}%`,
+                      transform: `rotate(${rotation}deg)`,
                     }}
                     onPointerDown={(event) => onPointerDown(event, "move", stamp)}
                   >
@@ -287,20 +508,75 @@ export function PrintEditor({
                             key={handle}
                             type="button"
                             aria-label="Cambiar tamaño"
-                            className={`absolute z-[7] h-3.5 w-3.5 rounded-sm border-2 border-white bg-magenta shadow ${
+                            className={`absolute z-[7] h-5 w-5 rounded-sm border-2 border-white bg-magenta shadow sm:h-3.5 sm:w-3.5 ${
                               handle === "nw"
-                                ? "-left-1.5 -top-1.5 cursor-nwse-resize"
+                                ? "-left-2 -top-2 cursor-nwse-resize sm:-left-1.5 sm:-top-1.5"
                                 : handle === "ne"
-                                  ? "-right-1.5 -top-1.5 cursor-nesw-resize"
+                                  ? "-right-2 -top-2 cursor-nesw-resize sm:-right-1.5 sm:-top-1.5"
                                   : handle === "sw"
-                                    ? "-left-1.5 -bottom-1.5 cursor-nesw-resize"
-                                    : "-right-1.5 -bottom-1.5 cursor-nwse-resize"
+                                    ? "-left-2 -bottom-2 cursor-nesw-resize sm:-left-1.5 sm:-bottom-1.5"
+                                    : "-right-2 -bottom-2 cursor-nwse-resize sm:-right-1.5 sm:-bottom-1.5"
                             }`}
                             onPointerDown={(event) => onPointerDown(event, handle, stamp)}
                           />
                         ))}
+                        <div
+                          className="absolute left-1/2 top-0 z-[8] flex items-center gap-0.5 rounded-full bg-panel/95 p-0.5 shadow-lg"
+                          style={{ transform: `translate(-50%, -50%) rotate(${-rotation}deg)` }}
+                          onPointerDown={(event) => event.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            aria-label="Rotar"
+                            className="grid h-8 w-8 place-items-center rounded-full text-on-panel hover:bg-white/10 sm:h-7 sm:w-7"
+                            onPointerDown={(event) => onPointerDown(event, "rotate", stamp)}
+                          >
+                            <RotateCw className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Pasar atrás"
+                            disabled={!canBackward}
+                            className="grid h-8 w-8 place-items-center rounded-full text-on-panel hover:bg-white/10 disabled:opacity-30 sm:h-7 sm:w-7"
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (canBackward) onStampLayer?.(stamp.id, "backward");
+                            }}
+                          >
+                            <SendToBack className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Pasar adelante"
+                            disabled={!canForward}
+                            className="grid h-8 w-8 place-items-center rounded-full text-on-panel hover:bg-white/10 disabled:opacity-30 sm:h-7 sm:w-7"
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (canForward) onStampLayer?.(stamp.id, "forward");
+                            }}
+                          >
+                            <BringToFront className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Eliminar"
+                            className="grid h-8 w-8 place-items-center rounded-full text-on-panel hover:bg-white/10 sm:h-7 sm:w-7"
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              onStampRemove?.(stamp.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                         {printCm ? (
-                          <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-panel/90 px-2 py-0.5 text-[10px] font-semibold text-on-panel">
+                          <span
+                            className="pointer-events-none absolute left-1/2 top-full mt-1.5 whitespace-nowrap rounded-full bg-panel/90 px-2 py-0.5 text-[10px] font-semibold text-on-panel"
+                            style={{ transform: `translateX(-50%) rotate(${-rotation}deg)` }}
+                          >
                             {formatCm(printCm.widthCm)} × {formatCm(printCm.heightCm).replace(" cm", "")}
                           </span>
                         ) : null}
@@ -310,13 +586,15 @@ export function PrintEditor({
                 );
               })}
             </ProductMock>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {selected ? (
-        <label className="mt-4 block text-sm text-on-panel/80">
-          <span className="flex justify-between text-xs uppercase tracking-wider text-on-panel/50">
+        <label className="mt-3 block text-sm text-on-panel/80 sm:mt-4">
+          <span className="flex justify-between text-[11px] uppercase tracking-wider text-on-panel/50 sm:text-xs">
             Tamaño de estampa
             <span>{scalePct}%</span>
           </span>
@@ -350,10 +628,10 @@ export function PrintEditor({
         </label>
       ) : null}
 
-      <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-2xl bg-white/10 px-3 py-2">
+      <dl className="mt-4 hidden grid-cols-2 items-stretch gap-2 text-sm sm:grid">
+        <div className="flex h-full min-h-full flex-col rounded-2xl bg-white/10 px-3 py-2">
           <dt className="text-[10px] uppercase tracking-wider text-on-panel/50">
-            Prenda {measures.size !== "Única" ? `· talle ${measures.size}` : ""}
+            Prenda {measures.size !== "Única" ? `· talla ${measures.size}` : ""}
           </dt>
           <dd className="mt-1 font-semibold text-on-panel">
             {formatCm(measures.widthCm)} ancho
@@ -361,7 +639,7 @@ export function PrintEditor({
             {formatCm(measures.lengthCm)} largo
           </dd>
         </div>
-        <div className="rounded-2xl bg-white/10 px-3 py-2">
+        <div className="flex h-full min-h-full flex-col rounded-2xl bg-white/10 px-3 py-2">
           <dt className="text-[10px] uppercase tracking-wider text-on-panel/50">
             Estampa seleccionada
           </dt>
@@ -370,15 +648,19 @@ export function PrintEditor({
               <>
                 {formatCm(printCm.widthCm)} × {formatCm(printCm.heightCm).replace(" cm", "")}
               </>
-            ) : sideStamps.length ? (
-              "Tocá una imagen para editarla"
+            ) : sideStamps.length || (text.trim() && textPlacement) ? (
+              "Toca la imagen o el texto para editarlos"
             ) : (
-              `Subí una imagen en ${sideTo(view)}`
+              `Sube una imagen en ${sideTo(view)}`
             )}
             {selected ? (
               <span className="mt-1 block text-[11px] font-normal text-on-panel/55">
                 Archivo {selected.widthPx} × {selected.heightPx} px
                 {dpi ? ` · ${dpi} dpi` : ""}
+              </span>
+            ) : textActive ? (
+              <span className="mt-1 block text-[11px] font-normal text-on-panel/55">
+                Texto · arrastra o estira las esquinas
               </span>
             ) : null}
           </dd>
@@ -386,7 +668,7 @@ export function PrintEditor({
       </dl>
       {dpi && dpi < 150 ? (
         <p className="mt-2 text-xs text-amber">
-          La resolución queda baja para ese tamaño. Achicá la estampa o subí un archivo más grande.
+          La resolución queda baja para ese tamaño. Achica la estampa o sube un archivo más grande.
         </p>
       ) : null}
     </div>

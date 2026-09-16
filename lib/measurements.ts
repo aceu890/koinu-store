@@ -50,25 +50,27 @@ export const SIZE_CHARTS: Record<ProductKind, GarmentMeasures[]> = {
 };
 
 export const PRINTABLE_AREA: Record<ProductKind, RectPct> = {
-  shirt: { left: 16, top: 12, width: 68, height: 80 },
-  hoodie: { left: 10, top: 8, width: 80, height: 88 },
-  mug: { left: 29, top: 36, width: 32, height: 32 },
-  tote: { left: 30, top: 42, width: 40, height: 34 },
-  cap: { left: 37, top: 26, width: 26, height: 18 },
-  print3d: { left: 34, top: 42, width: 32, height: 36 },
+  shirt: { left: 4, top: 3, width: 92, height: 95 },
+  hoodie: { left: 6, top: 4, width: 88, height: 94 },
+  mug: { left: 38, top: 22, width: 50, height: 58 },
+  tote: { left: 24, top: 38, width: 52, height: 54 },
+  cap: { left: 30, top: 32, width: 40, height: 26 },
+  print3d: { left: 36, top: 56, width: 28, height: 22 },
 };
 
 export const PRINTABLE_AREA_BACK: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 16, top: 10, width: 68, height: 82 },
-  hoodie: { left: 10, top: 6, width: 80, height: 90 },
+  shirt: { left: 4, top: 2, width: 92, height: 96 },
+  hoodie: { left: 6, top: 4, width: 88, height: 94 },
 };
 
 export const PRINTABLE_AREA_LEFT: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 18, top: 14, width: 38, height: 76 },
+  shirt: { left: 10, top: 4, width: 80, height: 94 },
+  hoodie: { left: 8, top: 4, width: 84, height: 94 },
 };
 
 export const PRINTABLE_AREA_RIGHT: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 40, top: 14, width: 38, height: 76 },
+  shirt: { left: 10, top: 4, width: 80, height: 94 },
+  hoodie: { left: 8, top: 4, width: 84, height: 94 },
 };
 
 export function getPrintableArea(
@@ -91,23 +93,23 @@ export const POSITION_PRESETS: Record<
     back: { left: 24, top: 26, width: 50, height: 52 },
   },
   hoodie: {
-    chest: { left: 38, top: 34, width: 24, height: 16 },
-    center: { left: 33, top: 36, width: 34, height: 24 },
-    back: { left: 33, top: 36, width: 34, height: 30 },
+    chest: { left: 35, top: 24, width: 30, height: 18 },
+    center: { left: 28, top: 22, width: 44, height: 40 },
+    back: { left: 22, top: 28, width: 56, height: 50 },
   },
   mug: {
-    center: { left: 31, top: 38, width: 28, height: 28 },
-    wrap: { left: 28, top: 36, width: 34, height: 32 },
+    center: { left: 42, top: 26, width: 38, height: 42 },
+    wrap: { left: 38, top: 22, width: 50, height: 56 },
   },
   tote: {
-    center: { left: 30, top: 42, width: 40, height: 34 },
+    center: { left: 28, top: 42, width: 44, height: 40 },
   },
   cap: {
-    center: { left: 37, top: 26, width: 26, height: 18 },
-    chest: { left: 38, top: 28, width: 24, height: 16 },
+    center: { left: 34, top: 34, width: 32, height: 22 },
+    chest: { left: 36, top: 36, width: 28, height: 18 },
   },
   print3d: {
-    center: { left: 34, top: 44, width: 32, height: 32 },
+    center: { left: 38, top: 58, width: 24, height: 18 },
   },
 };
 
@@ -187,6 +189,30 @@ export function clampPlacement(
   );
 
   return { x, y, width, height };
+}
+
+export function clampBox(placement: PrintPlacement, area: RectPct): PrintPlacement {
+  const width = Math.min(Math.max(placement.width, 8), area.width);
+  const height = Math.min(Math.max(placement.height, 5), area.height);
+  const x = Math.min(
+    Math.max(placement.x, area.left),
+    area.left + area.width - width,
+  );
+  const y = Math.min(
+    Math.max(placement.y, area.top),
+    area.top + area.height - height,
+  );
+  return { x, y, width, height };
+}
+
+export function defaultTextPlacement(kind: ProductKind, view: PrintSide = "front"): PrintPlacement {
+  const area = getPrintableArea(kind, view);
+  return {
+    x: area.left + area.width * 0.12,
+    y: area.top + area.height * 0.36,
+    width: area.width * 0.76,
+    height: area.height * 0.16,
+  };
 }
 
 export function placementToCm(

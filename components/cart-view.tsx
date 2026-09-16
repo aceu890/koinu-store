@@ -13,7 +13,10 @@ function cartPreviewSides(item: CartItem): PrintSide[] {
   const stamps = item.custom?.stamps ?? [];
   const sides = item.custom?.printSides ?? [];
   const found = PRINT_SIDES.filter(
-    (side) => stamps.some((stamp) => stamp.side === side) || sides.includes(side),
+    (side) =>
+      stamps.some((stamp) => stamp.side === side) ||
+      sides.includes(side) ||
+      Boolean(item.custom?.text?.trim() && item.custom.textPlacements?.[side]),
   );
   return found.length ? found : ["front"];
 }
@@ -68,7 +71,7 @@ export function CartView() {
           <Mascot name="keep-shopping-alt" alt="¡Sigue comprando!" size={280} />
         </div>
         <p className="mt-4 font-display text-2xl font-bold">El carrito está vacío</p>
-        <p className="mt-2 text-ink/60">Personalizá una prenda o recorré la galería.</p>
+        <p className="mt-2 text-ink/60">Personaliza una prenda o recorre la galería.</p>
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/personalizar"
@@ -101,6 +104,8 @@ export function CartView() {
                     design={item.design}
                     text={item.custom?.text}
                     textColor={item.custom?.textColor}
+                    textFont={item.custom?.textFont}
+                    textPlacement={item.custom?.textPlacements?.[side] ?? null}
                     position={side === "back" ? "back" : item.custom?.position}
                     view={side}
                     stamps={item.custom?.stamps}

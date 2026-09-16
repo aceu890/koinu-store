@@ -84,10 +84,10 @@ values
     18990, 'camisetas', 'shirt', 'sakura', array['#111111'], array['S','M','L','XL'], true
   ),
   (
-    'buzo-koinu-club',
-    'Buzo Koinu Club',
-    'Buzo oversized con estampado club. Interior frisa, print duradero al lavado.',
-    34990, 'buzos', 'hoodie', 'koinu', array['#1F2937'], array['S','M','L','XL','XXL'], true
+    'poleron-koinu-club',
+    'Polerón Koinu Club',
+    'Polerón oversized con estampado club. Interior frisa, print duradero al lavado.',
+    34990, 'polerones', 'hoodie', 'koinu', array['#1F2937'], array['S','M','L','XL','XXL'], true
   ),
   (
     'taza-buenos-dias',
@@ -120,10 +120,10 @@ values
     8490, 'tazas', 'mug', 'cafe', array['#FFFFFF'], array[]::text[], false
   ),
   (
-    'buzo-overprint',
-    'Buzo Overprint',
+    'poleron-overprint',
+    'Polerón Overprint',
     'Tipografía grande estilo taller de serigrafía.',
-    32990, 'buzos', 'hoodie', 'overprint', array['#7F1D1D'], array['M','L','XL','XXL'], false
+    32990, 'polerones', 'hoodie', 'overprint', array['#7F1D1D'], array['M','L','XL','XXL'], false
   ),
   (
     'camiseta-ruta-nocturna',

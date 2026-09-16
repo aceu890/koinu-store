@@ -3,7 +3,7 @@ import type { CustomizableBase, Product } from "@/lib/types";
 export const CATEGORIES = [
   { slug: "todos", name: "Todos" },
   { slug: "camisetas", name: "Camisetas" },
-  { slug: "buzos", name: "Buzos" },
+  { slug: "polerones", name: "Polerones" },
   { slug: "tazas", name: "Tazas" },
   { slug: "bolsos", name: "Bolsos" },
   { slug: "gorras", name: "Gorras" },
@@ -26,12 +26,12 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "prod-koinu-club",
-    slug: "buzo-koinu-club",
-    name: "Buzo Koinu Club",
+    slug: "poleron-koinu-club",
+    name: "Polerón Koinu Club",
     description:
-      "Buzo oversized con estampado club. Interior frisa, print duradero al lavado.",
+      "Polerón oversized con estampado club. Interior frisa, print duradero al lavado.",
     price: 34990,
-    category: "buzos",
+    category: "polerones",
     kind: "hoodie",
     design: "koinu",
     colors: ["#1F2937"],
@@ -109,12 +109,12 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "prod-overprint",
-    slug: "buzo-overprint",
-    name: "Buzo Overprint",
+    slug: "poleron-overprint",
+    name: "Polerón Overprint",
     description:
       "Tipografía grande estilo taller de serigrafía. Corte boxed, felpa suave.",
     price: 32990,
-    category: "buzos",
+    category: "polerones",
     kind: "hoodie",
     design: "overprint",
     colors: ["#7F1D1D"],
@@ -193,16 +193,16 @@ export const CUSTOMIZABLE_BASES: CustomizableBase[] = [
   },
   {
     slug: "hoodie",
-    name: "Buzo",
-    description: "Buzo con capucha, interior frisa. Estampa grande o pecho.",
+    name: "Polerón",
+    description: "Polerón con capucha, interior frisa. Estampa grande, pecho o perfiles.",
     basePrice: 34990,
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: [
+      { name: "Crema", hex: "#F5E6C8" },
       { name: "Gris", hex: "#4B5563" },
       { name: "Negro", hex: "#171411" },
       { name: "Bordo", hex: "#7F1D1D" },
       { name: "Azul noche", hex: "#1E3A5F" },
-      { name: "Crema", hex: "#F5E6C8" },
     ],
   },
   {
@@ -213,7 +213,11 @@ export const CUSTOMIZABLE_BASES: CustomizableBase[] = [
     sizes: [],
     colors: [
       { name: "Blanco", hex: "#FFFFFF" },
-      { name: "Negro interior", hex: "#F8FAFC" },
+      { name: "Negro", hex: "#171411" },
+      { name: "Rosa", hex: "#F9A8D4" },
+      { name: "Celeste", hex: "#7DD3FC" },
+      { name: "Menta", hex: "#6EE7B7" },
+      { name: "Mostaza", hex: "#EAB308" },
     ],
   },
   {
@@ -226,6 +230,9 @@ export const CUSTOMIZABLE_BASES: CustomizableBase[] = [
       { name: "Natural", hex: "#F5E6C8" },
       { name: "Blanco", hex: "#FFFFFF" },
       { name: "Negro", hex: "#1F1A17" },
+      { name: "Rosa", hex: "#F9A8D4" },
+      { name: "Celeste", hex: "#7DD3FC" },
+      { name: "Menta", hex: "#6EE7B7" },
     ],
   },
   {
@@ -236,24 +243,11 @@ export const CUSTOMIZABLE_BASES: CustomizableBase[] = [
     sizes: ["Única"],
     colors: [
       { name: "Negro", hex: "#171411" },
-      { name: "Teal", hex: "#0F766E" },
+      { name: "Blanco", hex: "#F8FAFC" },
       { name: "Rosa", hex: "#FB7185" },
-      { name: "Blanco", hex: "#F8FAFC" },
-    ],
-  },
-  {
-    slug: "print3d",
-    name: "Impresión 3D",
-    description: "Figura, llavero o pie de diseño. Filamento PLA, a tu medida.",
-    basePrice: 15990,
-    sizes: ["Mini", "Mediano", "Grande"],
-    colors: [
-      { name: "Blanco", hex: "#F8FAFC" },
-      { name: "Negro", hex: "#171411" },
-      { name: "Magenta", hex: "#FF3D7F" },
+      { name: "Celeste", hex: "#7DD3FC" },
+      { name: "Menta", hex: "#6EE7B7" },
       { name: "Teal", hex: "#0F766E" },
-      { name: "Naranja", hex: "#E07A2F" },
-      { name: "Gris", hex: "#6B7280" },
     ],
   },
 ];

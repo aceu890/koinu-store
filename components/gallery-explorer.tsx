@@ -32,7 +32,7 @@ export function GalleryExplorer({ products }: { products: Product[] }) {
           </button>
         ))}
       </div>
-      <ProductGrid products={filtered} />
+      <ProductGrid products={filtered} pastel="solid" />
     </div>
   );
 }
