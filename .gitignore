@@ -38,6 +38,8 @@ yarn-error.log*
 /data/store.json
 /public/uploads/products/*
 !/public/uploads/products/.gitkeep
+/public/uploads/orders/*
+!/public/uploads/orders/.gitkeep
 
 # vercel
 .vercel

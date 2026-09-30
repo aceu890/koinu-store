@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildLocalOrder, saveLocalOrder } from "@/lib/admin-data";
+import { persistCustomDetails } from "@/lib/order-media";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { CartItem, CheckoutPayload } from "@/lib/types";
 
@@ -34,14 +35,34 @@ export async function POST(request: Request) {
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const supabase = await createServerSupabase();
 
+  async function withSavedArt(orderId: string): Promise<CartItem[]> {
+    return Promise.all(
+      items.map(async (item, index) => {
+        if (!item.custom) return item;
+        return {
+          ...item,
+          custom: await persistCustomDetails(item.custom, orderId, `item-${index + 1}`),
+        };
+      }),
+    );
+  }
+
   if (!supabase) {
     const id = crypto.randomUUID();
-    await saveLocalOrder(buildLocalOrder(body, id, total));
-    return NextResponse.json({
-      id,
-      total,
-      offline: true,
-    });
+    try {
+      const savedItems = await withSavedArt(id);
+      await saveLocalOrder(buildLocalOrder({ ...body, items: savedItems }, id, total));
+      return NextResponse.json({
+        id,
+        total,
+        offline: true,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "No se pudieron guardar las imágenes" },
+        { status: 500 },
+      );
+    }
   }
 
   const { data: order, error: orderError } = await supabase
@@ -67,7 +88,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const rows = items.map((item) => ({
+  let savedItems: CartItem[];
+  try {
+    savedItems = await withSavedArt(order.id);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "No se pudieron guardar las imágenes" },
+      { status: 500 },
+    );
+  }
+
+  const rows = savedItems.map((item) => ({
     order_id: order.id,
     kind: item.kind,
     product_name: item.name,
@@ -80,18 +111,7 @@ export async function POST(request: Request) {
       size: item.size ?? null,
       design: item.design ?? null,
       productKind: item.productKind,
-      custom: item.custom
-        ? {
-            ...item.custom,
-            artworkDataUrl: item.custom.artworkDataUrl
-              ? "[uploaded]"
-              : null,
-            stamps: item.custom.stamps?.map((stamp) => ({
-              ...stamp,
-              artworkDataUrl: stamp.artworkDataUrl ? "[uploaded]" : "",
-            })),
-          }
-        : null,
+      custom: item.custom ?? null,
     },
   }));
 
@@ -100,6 +120,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
-  await saveLocalOrder(buildLocalOrder(body, order.id, total));
+  await saveLocalOrder(buildLocalOrder({ ...body, items: savedItems }, order.id, total));
   return NextResponse.json({ id: order.id, total });
 }

@@ -3,8 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIES } from "@/lib/catalog";
-import { slugify } from "@/lib/format";
-import { kindLabel } from "@/lib/format";
+import { kindLabel, slugify } from "@/lib/format";
 import type { DesignKey, Product, ProductKind } from "@/lib/types";
 
 const KINDS: ProductKind[] = ["shirt", "hoodie", "mug", "tote", "cap", "print3d"];
@@ -23,12 +22,22 @@ const DESIGNS: DesignKey[] = [
   "team",
 ];
 
+const KIND_DEFAULTS: Record<ProductKind, { category: string; sizes: string }> = {
+  shirt: { category: "camisetas", sizes: "S, M, L, XL" },
+  hoodie: { category: "polerones", sizes: "S, M, L, XL, XXL" },
+  mug: { category: "tazas", sizes: "" },
+  tote: { category: "bolsos", sizes: "" },
+  cap: { category: "gorras", sizes: "Única" },
+  print3d: { category: "camisetas", sizes: "" },
+};
+
 type Props = {
   product?: Product;
 };
 
 export function ProductForm({ product }: Props) {
   const router = useRouter();
+  const [mode, setMode] = useState<"basic" | "advanced">("basic");
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
@@ -49,6 +58,14 @@ export function ProductForm({ product }: Props) {
   function onName(value: string) {
     setName(value);
     if (!slugTouched) setSlug(slugify(value));
+  }
+
+  function onKind(next: ProductKind) {
+    const previous = KIND_DEFAULTS[kind];
+    const defaults = KIND_DEFAULTS[next];
+    setKind(next);
+    setCategory(defaults.category);
+    if (sizes === previous.sizes || !product) setSizes(defaults.sizes);
   }
 
   async function upload(file: File) {
@@ -74,7 +91,7 @@ export function ProductForm({ product }: Props) {
     setError("");
     const payload = {
       name,
-      slug,
+      slug: slug || slugify(name),
       description,
       price: Number(price),
       category,
@@ -105,193 +122,277 @@ export function ProductForm({ product }: Props) {
     }
   }
 
-  return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-      <div className="space-y-4 rounded-3xl border border-ink/10 bg-surface p-6">
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Nombre</span>
-          <input
-            value={name}
-            onChange={(event) => onName(event.target.value)}
-            required
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Slug</span>
-          <input
-            value={slug}
-            onChange={(event) => {
-              setSlugTouched(true);
-              setSlug(event.target.value);
-            }}
-            required
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Descripción</span>
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={4}
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Precio (CLP)
-          </span>
-          <input
-            type="number"
-            min={0}
-            step={1}
-            value={price}
-            onChange={(event) => setPrice(event.target.value)}
-            required
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-          />
-        </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Categoría</span>
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
-            >
-              {CATEGORIES.filter((item) => item.slug !== "todos").map((item) => (
-                <option key={item.slug} value={item.slug}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Tipo</span>
-            <select
-              value={kind}
-              onChange={(event) => setKind(event.target.value as ProductKind)}
-              className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
-            >
-              {KINDS.map((item) => (
-                <option key={item} value={item}>
-                  {kindLabel(item)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Mock de diseño (si no hay foto)
-          </span>
-          <select
-            value={design}
-            onChange={(event) => setDesign(event.target.value as DesignKey)}
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
+  const photoField = (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-wider text-ink/50">Foto</p>
+      <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-ink/20 bg-paper/50 px-4 py-8 text-center hover:border-magenta">
+        <span className="text-sm font-semibold">{uploading ? "Subiendo…" : "Subir imagen"}</span>
+        <span className="mt-1 text-xs text-ink/45">JPG, PNG o WEBP · máx. 4 MB</span>
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void upload(file);
+            event.target.value = "";
+          }}
+        />
+      </label>
+      {imageUrl ? (
+        <div className="mt-3 overflow-hidden rounded-2xl bg-mock">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imageUrl} alt="" className="mx-auto max-h-52 object-contain" />
+          <button
+            type="button"
+            className="m-2 text-xs text-magenta underline"
+            onClick={() => setImageUrl("")}
           >
-            {DESIGNS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Colores (hex, separados por coma)
-          </span>
-          <input
-            value={colors}
-            onChange={(event) => setColors(event.target.value)}
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Tallas (separadas por coma)
-          </span>
-          <input
-            value={sizes}
-            onChange={(event) => setSizes(event.target.value)}
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-          />
-        </label>
-      </div>
-
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-ink/10 bg-surface p-6">
-          <p className="text-xs font-bold uppercase tracking-wider text-ink/50">Foto del producto</p>
-          <label className="mt-3 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-ink/20 px-4 py-8 text-center hover:border-magenta">
-            <span className="text-sm font-semibold">
-              {uploading ? "Subiendo…" : "Subir imagen"}
-            </span>
-            <span className="mt-1 text-xs text-ink/45">JPG, PNG o WEBP · máx. 4 MB</span>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void upload(file);
-                event.target.value = "";
-              }}
-            />
-          </label>
-          {imageUrl ? (
-            <div className="mt-4 overflow-hidden rounded-2xl bg-mock">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageUrl} alt="" className="mx-auto max-h-56 object-contain" />
-              <button
-                type="button"
-                className="mt-2 text-xs text-magenta underline"
-                onClick={() => setImageUrl("")}
-              >
-                Quitar foto
-              </button>
-            </div>
-          ) : null}
-          <label className="mt-4 block">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
-              O URL de imagen
-            </span>
-            <input
-              value={imageUrl}
-              onChange={(event) => setImageUrl(event.target.value)}
-              className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
-            />
-          </label>
+            Quitar foto
+          </button>
         </div>
+      ) : null}
+    </div>
+  );
 
-        <div className="rounded-3xl border border-ink/10 bg-surface p-6">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={featured}
-              onChange={(event) => setFeatured(event.target.checked)}
-            />
-            Destacado en inicio
-          </label>
-          <label className="mt-3 flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={inStock}
-              onChange={(event) => setInStock(event.target.checked)}
-            />
-            Visible en la tienda
-          </label>
-        </div>
+  const actions = (
+    <>
+      {error ? <p className="text-sm text-magenta-dark">{error}</p> : null}
+      <button
+        type="submit"
+        disabled={loading || uploading}
+        className="w-full rounded-full bg-magenta py-3 font-display font-bold text-white disabled:opacity-60"
+      >
+        {loading ? "Guardando…" : product ? "Guardar cambios" : "Publicar producto"}
+      </button>
+    </>
+  );
 
-        {error ? <p className="text-sm text-magenta-dark">{error}</p> : null}
+  return (
+    <form onSubmit={onSubmit}>
+      <div className="mb-5 grid max-w-md grid-cols-2 rounded-full bg-ink/5 p-1">
         <button
-          type="submit"
-          disabled={loading || uploading}
-          className="w-full rounded-full bg-magenta py-3 font-display font-bold text-white disabled:opacity-60"
+          type="button"
+          onClick={() => setMode("basic")}
+          className={`rounded-full py-2 text-sm font-semibold ${
+            mode === "basic" ? "bg-ink text-paper" : "text-ink/55"
+          }`}
         >
-          {loading ? "Guardando…" : product ? "Guardar cambios" : "Publicar producto"}
+          Básico
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("advanced")}
+          className={`rounded-full py-2 text-sm font-semibold ${
+            mode === "advanced" ? "bg-ink text-paper" : "text-ink/55"
+          }`}
+        >
+          Avanzado
         </button>
       </div>
+
+      {mode === "basic" ? (
+        <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-ink/10 bg-surface p-4 sm:p-5">{photoField}</div>
+          <div className="space-y-3 rounded-2xl border border-ink/10 bg-surface p-4 sm:p-5">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Nombre</span>
+              <input
+                value={name}
+                onChange={(event) => onName(event.target.value)}
+                required
+                placeholder="Ej: Camiseta negra"
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Precio (CLP)</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                required
+                placeholder="18990"
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Qué es</span>
+              <select
+                value={kind}
+                onChange={(event) => onKind(event.target.value as ProductKind)}
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
+              >
+                {KINDS.map((item) => (
+                  <option key={item} value={item}>
+                    {kindLabel(item)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-2 pt-1 text-sm">
+              <input
+                type="checkbox"
+                checked={inStock}
+                onChange={(event) => setInStock(event.target.checked)}
+              />
+              Visible en la tienda
+            </label>
+            {actions}
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4 rounded-3xl border border-ink/10 bg-surface p-6">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Nombre</span>
+              <input
+                value={name}
+                onChange={(event) => onName(event.target.value)}
+                required
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Slug</span>
+              <input
+                value={slug}
+                onChange={(event) => {
+                  setSlugTouched(true);
+                  setSlug(event.target.value);
+                }}
+                required
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Descripción</span>
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={4}
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Precio (CLP)</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                required
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Categoría</span>
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
+                >
+                  {CATEGORIES.filter((item) => item.slug !== "todos").map((item) => (
+                    <option key={item.slug} value={item.slug}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Tipo</span>
+                <select
+                  value={kind}
+                  onChange={(event) => onKind(event.target.value as ProductKind)}
+                  className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
+                >
+                  {KINDS.map((item) => (
+                    <option key={item} value={item}>
+                      {kindLabel(item)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
+                Mock de diseño (si no hay foto)
+              </span>
+              <select
+                value={design}
+                onChange={(event) => setDesign(event.target.value as DesignKey)}
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3"
+              >
+                {DESIGNS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
+                Colores (hex, separados por coma)
+              </span>
+              <input
+                value={colors}
+                onChange={(event) => setColors(event.target.value)}
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
+                Tallas (separadas por coma)
+              </span>
+              <input
+                value={sizes}
+                onChange={(event) => setSizes(event.target.value)}
+                className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-ink/10 bg-surface p-6">
+              {photoField}
+              <label className="mt-4 block">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
+                  O URL de imagen
+                </span>
+                <input
+                  value={imageUrl}
+                  onChange={(event) => setImageUrl(event.target.value)}
+                  className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none ring-magenta/30 focus:ring"
+                />
+              </label>
+            </div>
+
+            <div className="rounded-3xl border border-ink/10 bg-surface p-6">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={featured}
+                  onChange={(event) => setFeatured(event.target.checked)}
+                />
+                Destacado en inicio
+              </label>
+              <label className="mt-3 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={inStock}
+                  onChange={(event) => setInStock(event.target.checked)}
+                />
+                Visible en la tienda
+              </label>
+            </div>
+            {actions}
+          </div>
+        </div>
+      )}
     </form>
   );
 }

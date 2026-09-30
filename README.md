@@ -17,18 +17,19 @@ Abre [http://localhost:3000](http://localhost:3000). Sin Supabase también funci
 
 ## Conectar Supabase
 
-1. Crea un proyecto en [Supabase](https://supabase.com).
-2. En el SQL Editor, ejecuta `supabase/schema.sql`.
-3. Copia `.env.example` a `.env.local` y completa:
+1. Crea un proyecto en [Supabase](https://supabase.com) (región cercana, por ejemplo South America).
+2. En el SQL Editor, pega y ejecuta todo `supabase/schema.sql`. Eso crea tablas, políticas y los buckets `product-images` y `order-art`.
+3. Copia `.env.example` a `.env.local` y completa las tres claves de **Project Settings → API**:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
 ```
 
-4. Reinicia `npm run dev`.
+4. Reinicia `npm run dev`. En `/admin` deberías ver “Base: Supabase”.
 
-Los pedidos se guardan en `orders` y `order_items`. Si las variables no están, el checkout igual confirma en modo local.
+Los pedidos van a `orders` / `order_items`. Las fotos de producto y el arte para sublimar van a Storage. Sin esas variables, el checkout sigue funcionando en modo local (`data/store.json`).
 
 ## Dashboard
 
@@ -42,4 +43,4 @@ Desde el dashboard puedes:
 - Subir, editar y ocultar productos de la galería
 - Cargar fotos de producto
 
-Sin Supabase, pedidos y productos se guardan en `data/store.json`. Con Supabase, agrega también `SUPABASE_SERVICE_ROLE_KEY` para escribir en la base (estados y catálogo). Si el proyecto ya existía, ejecuta de nuevo `supabase/schema.sql` para sumar `image_url`.
+Sin Supabase, pedidos y productos se guardan en `data/store.json`. Con Supabase, `SUPABASE_SERVICE_ROLE_KEY` es obligatoria para el admin (catálogo, estados y Storage). Si el proyecto ya existía, vuelve a ejecutar `supabase/schema.sql` para sumar Storage y `image_url`.

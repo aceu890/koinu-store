@@ -9,6 +9,10 @@ export function Footer() {
   const pathname = usePathname();
   if (pathname.startsWith("/admin")) return null;
   const hideOnMobile = pathname.startsWith("/personalizar");
+  const checkoutFlow =
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/carrito") ||
+    pathname.startsWith("/pedido");
   return (
     <footer
       id="site-footer"
@@ -34,9 +38,11 @@ export function Footer() {
         </div>
 
         <div className="flex min-w-0 items-center justify-center gap-1.5 sm:gap-3">
-          <div className="w-12 shrink-0 sm:w-20">
-            <Mascot name="here" alt="Estamos aquí" size={140} />
-          </div>
+          {checkoutFlow ? null : (
+            <div className="w-12 shrink-0 sm:w-20">
+              <Mascot name="here" alt="Estamos aquí" size={140} />
+            </div>
+          )}
           <div className="min-w-0 text-[10px] leading-tight sm:text-sm">
             <p className="font-display font-semibold">Taller</p>
             <p className="text-on-panel/65">Lun–sáb · 10 a 19 h</p>
@@ -45,14 +51,25 @@ export function Footer() {
         </div>
 
         <nav className="flex min-w-0 items-center justify-end gap-1.5 text-[10px] sm:gap-3 sm:text-sm">
-          <a
-            href="https://www.instagram.com/koinustore_dtf/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-14 shrink-0 sm:w-24"
-          >
-            <Mascot name="follow" alt="Síguenos en Instagram" size={160} />
-          </a>
+          {checkoutFlow ? (
+            <a
+              href="https://www.instagram.com/koinustore_dtf/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden hover:text-magenta sm:inline"
+            >
+              Instagram
+            </a>
+          ) : (
+            <a
+              href="https://www.instagram.com/koinustore_dtf/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-14 shrink-0 sm:w-24"
+            >
+              <Mascot name="follow" alt="Síguenos en Instagram" size={160} />
+            </a>
+          )}
           <div className="flex flex-col items-end gap-0.5 sm:items-start sm:gap-1">
             <Link href="/personalizar" className="hover:text-magenta">
               Personalizar

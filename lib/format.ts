@@ -72,6 +72,7 @@ export function slugify(value: string) {
 
 export function paymentLabel(method: string) {
   const labels: Record<string, string> = {
+    webpay: "Webpay",
     transferencia: "Transferencia",
     efectivo: "Efectivo",
   };

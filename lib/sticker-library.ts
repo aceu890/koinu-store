@@ -1,6 +1,8 @@
 export type LibrarySticker = {
   id: string;
   src: string;
+  printSrc: string;
+  printFileName: string;
   thumb: string;
   label: string;
   width: number;
@@ -26,7 +28,9 @@ function stickers(
 ): LibrarySticker[] {
   return items.map((item) => ({
     id: item.id,
-    src: `/Stickers/${pack}/${encodeURIComponent(item.file)}`,
+    src: `/Stickers/${pack}/print/${item.id}.webp`,
+    printSrc: `/Stickers/${pack}/${encodeURIComponent(item.file)}`,
+    printFileName: item.file,
     thumb: `/Stickers/${pack}/thumbs/${item.thumb}`,
     label: item.label,
     width: item.width,

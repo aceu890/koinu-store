@@ -312,16 +312,7 @@ function itemsFromCart(items: CartItem[]): AdminOrderItem[] {
       size: item.size ?? null,
       design: item.design ?? null,
       productKind: item.productKind,
-      custom: item.custom
-        ? {
-            ...item.custom,
-            artworkDataUrl: item.custom.artworkDataUrl ? "[uploaded]" : null,
-            stamps: item.custom.stamps?.map((stamp) => ({
-              ...stamp,
-              artworkDataUrl: stamp.artworkDataUrl ? "[uploaded]" : "",
-            })),
-          }
-        : null,
+      custom: item.custom ?? null,
     },
   }));
 }
@@ -397,7 +388,7 @@ function mapOrderRow(row: OrderRow, statusOverride?: OrderStatus): AdminOrder {
 
 export async function listOrders(): Promise<AdminOrder[]> {
   const store = await readStore();
-  const supabase = await createServerSupabase();
+  const supabase = createServiceSupabase() ?? (await createServerSupabase());
 
   if (supabase) {
     const { data, error } = await supabase

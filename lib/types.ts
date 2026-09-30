@@ -58,6 +58,8 @@ export type PrintStamp = {
   id: string;
   side: PrintSide;
   artworkDataUrl: string;
+  printFileUrl?: string;
+  printFileName?: string;
   placement: PrintPlacement;
   widthPx: number;
   heightPx: number;
@@ -87,6 +89,7 @@ export type CustomDetails = {
   artworkHeightPx?: number;
   printWidthCm?: number;
   printHeightCm?: number;
+  previewBySide?: Partial<Record<PrintSide, string>>;
 };
 
 export type CartItemKind = "catalog" | "custom";
@@ -106,6 +109,8 @@ export type CartItem = {
   custom?: CustomDetails;
 };
 
+export type PaymentMethod = "webpay" | "transferencia" | "efectivo";
+
 export type CheckoutPayload = {
   customerName: string;
   email: string;
@@ -113,7 +118,7 @@ export type CheckoutPayload = {
   address: string;
   city: string;
   notes: string;
-  paymentMethod: "transferencia" | "efectivo";
+  paymentMethod: PaymentMethod;
   items: CartItem[];
 };
 

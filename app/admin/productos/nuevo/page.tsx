@@ -9,7 +9,7 @@ export default function NewProductPage() {
       </Link>
       <h1 className="mt-3 font-display text-3xl font-bold">Subir producto</h1>
       <p className="mt-2 text-sm text-ink/60">
-        Carga foto, precio y detalles. Aparece en la galería si lo dejas visible.
+        Modo básico: foto, nombre, precio y tipo. Si hace falta más, pasá a Avanzado.
       </p>
       <div className="mt-6">
         <ProductForm />

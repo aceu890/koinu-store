@@ -1,5 +1,5 @@
--- Koinu Store — schema + seed
--- Pegá este archivo en el SQL Editor de Supabase y ejecutalo.
+-- Koinu Store — schema + seed + Storage
+-- En Supabase: SQL Editor → New query → pegá TODO este archivo → Run.
 
 create extension if not exists "pgcrypto";
 
@@ -152,4 +152,45 @@ values
 on conflict (slug) do nothing;
 
 alter table public.products add column if not exists image_url text;
+
+create index if not exists products_slug_idx on public.products (slug);
+create index if not exists orders_created_at_idx on public.orders (created_at desc);
+create index if not exists order_items_order_id_idx on public.order_items (order_id);
+
+alter table public.orders drop constraint if exists orders_status_check;
+alter table public.orders
+  add constraint orders_status_check
+  check (status in ('pending', 'paid', 'in_production', 'shipped', 'delivered', 'cancelled'));
+
+-- Fotos de catálogo y arte de pedidos (lectura pública; la app sube con service role)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  (
+    'product-images',
+    'product-images',
+    true,
+    5242880,
+    array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  ),
+  (
+    'order-art',
+    'order-art',
+    true,
+    10485760,
+    array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  )
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "product_images_public_read" on storage.objects;
+create policy "product_images_public_read"
+  on storage.objects for select
+  using (bucket_id = 'product-images');
+
+drop policy if exists "order_art_public_read" on storage.objects;
+create policy "order_art_public_read"
+  on storage.objects for select
+  using (bucket_id = 'order-art');
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ChartNoAxesCombined,
   LayoutDashboard,
   LogOut,
   Package,
@@ -13,6 +14,7 @@ import { BrandLogo } from "@/components/brand-logo";
 
 const links = [
   { href: "/admin", label: "Resumen", icon: LayoutDashboard },
+  { href: "/admin/estadisticas", label: "Estadísticas", icon: ChartNoAxesCombined },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/productos", label: "Productos", icon: Package },
 ];

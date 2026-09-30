@@ -1,10 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mascot } from "@/components/mascot";
+import { BadgeCheck, Loader2, Lock, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
+import { WebpayLogo, WebpayTrustBlock } from "@/components/webpay-marks";
 import { useCartStore, useCartTotal } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
+import { persistCartMedia } from "@/lib/order-media-client";
+import { parsePaymentMethod } from "@/lib/payments";
 import type { CheckoutPayload } from "@/lib/types";
 
 export function CheckoutForm() {
@@ -15,6 +19,7 @@ export function CheckoutForm() {
   const total = useCartTotal();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [method, setMethod] = useState<"webpay" | "transferencia">("webpay");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,7 +33,7 @@ export function CheckoutForm() {
       address: String(form.get("address") ?? "").trim(),
       city: String(form.get("city") ?? "").trim(),
       notes: String(form.get("notes") ?? "").trim(),
-      paymentMethod: form.get("paymentMethod") === "efectivo" ? "efectivo" : "transferencia",
+      paymentMethod: parsePaymentMethod(form.get("paymentMethod")),
       items,
     };
 
@@ -41,10 +46,11 @@ export function CheckoutForm() {
     setError("");
 
     try {
+      const itemsWithMedia = await persistCartMedia(items);
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, items: itemsWithMedia }),
       });
       const data = (await response.json()) as { id?: string; error?: string; offline?: boolean };
 
@@ -55,6 +61,7 @@ export function CheckoutForm() {
       clear();
       const qs = new URLSearchParams({
         total: String(total),
+        pago: payload.paymentMethod,
         ...(data.offline ? { offline: "1" } : {}),
       });
       router.push(`/pedido/${data.id}?${qs.toString()}`);
@@ -66,99 +73,171 @@ export function CheckoutForm() {
 
   if (!hydrated) {
     return (
-      <div className="flex flex-col items-center py-10">
-        <div className="w-40">
-          <Mascot name="loading" alt="Cargando" size={240} />
-        </div>
-        <p className="mt-3 text-ink/50">Cargando…</p>
+      <div className="flex flex-col items-center py-16 text-ink/50">
+        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+        <p className="mt-3 text-sm">Cargando…</p>
       </div>
     );
   }
 
   if (!items.length) {
     return (
-      <div className="flex flex-col items-center py-10 text-center">
-        <div className="w-44">
-          <Mascot name="keep-shopping-alt" alt="¡Sigue comprando!" size={260} />
-        </div>
-        <p className="mt-3 text-ink/70">No hay productos para checkout. Vuelve al carrito.</p>
+      <div className="rounded-3xl border border-ink/10 bg-surface px-6 py-14 text-center">
+        <ShoppingBag className="mx-auto h-8 w-8 text-ink/30" aria-hidden />
+        <p className="mt-4 font-display text-xl font-bold">No hay productos para pagar</p>
+        <p className="mt-2 text-sm text-ink/60">Vuelve al carrito o recorre la galería.</p>
+        <Link
+          href="/carrito"
+          className="mt-6 inline-block rounded-full border border-ink px-5 py-2.5 text-sm font-semibold"
+        >
+          Ir al carrito
+        </Link>
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-      <div className="space-y-4 rounded-3xl border border-ink/10 bg-surface/70 p-6">
-        <h2 className="font-display text-2xl font-bold">Datos de entrega</h2>
-        <Field name="customerName" label="Nombre y apellido" required />
-        <Field name="email" label="Email" type="email" required />
-        <Field name="phone" label="Teléfono" />
-        <Field name="address" label="Dirección" required />
-        <Field name="city" label="Ciudad" />
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Notas</span>
-          <textarea
-            name="notes"
-            rows={3}
-            className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none focus:ring focus:ring-magenta/30"
-            placeholder="Horario, referencias, detalle del diseño…"
-          />
-        </label>
-        <fieldset>
-          <legend className="text-xs font-bold uppercase tracking-wider text-ink/50">
-            Pago
-          </legend>
-          <label className="mt-2 flex items-center gap-2 text-sm">
-            <input type="radio" name="paymentMethod" value="transferencia" defaultChecked />
-            Transferencia bancaria
+    <form onSubmit={onSubmit} className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-ink/10 bg-surface p-6 sm:p-7">
+          <h2 className="font-display text-xl font-bold">Datos de envío</h2>
+          <p className="mt-1 text-sm text-ink/55">Usamos estos datos solo para despachar tu pedido.</p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <Field name="customerName" label="Nombre y apellido" required className="sm:col-span-2" />
+            <Field name="email" label="Email" type="email" required />
+            <Field name="phone" label="Teléfono" type="tel" />
+            <Field name="address" label="Dirección" required className="sm:col-span-2" />
+            <Field name="city" label="Comuna / ciudad" />
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Notas</span>
+              <textarea
+                name="notes"
+                rows={3}
+            className="mt-1 w-full rounded-2xl border border-ink/10 bg-paper px-4 py-3 outline-none focus:ring-2 focus:ring-ink/15"
+                placeholder="Referencias de despacho, horario u otras indicaciones"
+              />
+            </label>
+          </div>
+        </section>
+
+        <fieldset className="rounded-3xl border border-ink/10 bg-surface p-6 sm:p-7">
+          <legend className="sr-only">Medio de pago</legend>
+          <h2 className="font-display text-xl font-bold">Medio de pago</h2>
+          <p className="mt-1 text-sm text-ink/55">Elige cómo quieres pagar. El cobro se confirma después de crear el pedido.</p>
+
+          <label
+            className={`mt-5 flex cursor-pointer gap-4 rounded-2xl border p-4 transition ${
+              method === "webpay" ? "border-ink bg-paper" : "border-ink/10 bg-paper/40"
+            }`}
+          >
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="webpay"
+              checked={method === "webpay"}
+              onChange={() => setMethod("webpay")}
+              className="mt-1"
+            />
+            <span className="min-w-0 flex-1">
+              <WebpayLogo className="h-8 w-auto" />
+              <span className="mt-2 block text-sm text-ink/60">
+                Te enviamos el link de cobro al email.
+              </span>
+            </span>
           </label>
-          <label className="mt-2 flex items-center gap-2 text-sm">
-            <input type="radio" name="paymentMethod" value="efectivo" />
-            Efectivo / contraentrega
+
+          <label
+            className={`mt-3 flex cursor-pointer gap-4 rounded-2xl border p-4 transition ${
+              method === "transferencia" ? "border-ink bg-paper" : "border-ink/10 bg-paper/40"
+            }`}
+          >
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="transferencia"
+              checked={method === "transferencia"}
+              onChange={() => setMethod("transferencia")}
+              className="mt-1"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="text-sm font-semibold">Transferencia bancaria</span>
+              <span className="mt-1 block text-sm text-ink/60">
+                Te enviamos los datos de la cuenta para transferir el total.
+              </span>
+            </span>
           </label>
         </fieldset>
+
         {error ? <p className="text-sm text-magenta-dark">{error}</p> : null}
       </div>
 
-      <aside className="h-fit rounded-3xl bg-panel p-6 text-on-panel">
-            <div className="mb-4 w-40">
-              <Mascot name="payment" alt="Métodos de pago fáciles y seguros" size={240} />
-            </div>
-            <p className="text-xs uppercase tracking-[0.22em] text-amber">Tu pedido</p>
-        <ul className="mt-4 space-y-2 text-sm text-on-panel/80">
-          {items.map((item) => (
-            <li key={item.id} className="flex justify-between gap-3">
-              <span>
-                {item.quantity}× {item.name}
-              </span>
-              <span>{formatPrice(item.unitPrice * item.quantity)}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-6 flex justify-between font-display text-2xl font-bold">
-          <span>Total</span>
-          <span>{formatPrice(total)}</span>
-        </p>
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-personaliza mt-6 w-full rounded-full bg-magenta py-3 font-display font-bold text-white disabled:opacity-60"
-        >
-          {loading ? "Confirmando…" : "Confirmar compra"}
-        </button>
-        {loading ? (
-          <div className="mx-auto mt-4 w-32">
-            <Mascot name="loading" alt="Cargando" size={200} />
+      <aside className="h-fit space-y-4 lg:sticky lg:top-6">
+        <div className="rounded-3xl border border-ink/10 bg-surface p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/45">Resumen</p>
+          <ul className="mt-4 space-y-3 text-sm">
+            {items.map((item) => (
+              <li key={item.id} className="flex justify-between gap-3">
+                <span className="text-ink/70">
+                  {item.quantity}× {item.name}
+                </span>
+                <span className="shrink-0 font-medium">{formatPrice(item.unitPrice * item.quantity)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 flex justify-between border-t border-ink/10 pt-4 text-sm text-ink/55">
+            <span>Envío</span>
+            <span>A coordinar</span>
           </div>
-        ) : null}
-        <p className="mt-3 text-xs text-on-panel/50">
-          Esta es la base del checkout. Más adelante se puede conectar Mercado Pago u otro medio.
-        </p>
-        <div className="mx-auto mt-4 w-36">
-          <Mascot name="secure-alt" alt="Compra segura, tus datos protegidos" size={220} />
+          <p className="mt-3 flex justify-between font-display text-2xl font-bold">
+            <span>Total</span>
+            <span>{formatPrice(total)}</span>
+          </p>
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 font-display font-bold text-white disabled:opacity-60"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Procesando pedido…
+              </>
+            ) : method === "webpay" ? (
+              "Confirmar y pagar con Webpay"
+            ) : (
+              "Confirmar pedido"
+            )}
+          </button>
+          <p className="mt-3 text-center text-xs text-ink/45">
+            Al confirmar, creamos tu orden. El pago con Webpay lo coordinamos después.
+          </p>
         </div>
+
+        <WebpayTrustBlock />
+
+        <ul className="grid gap-3 rounded-3xl border border-ink/10 bg-surface p-5 text-sm text-ink/70 sm:grid-cols-2 lg:grid-cols-1">
+          <TrustItem icon={Lock} text="Conexión segura" />
+          <TrustItem icon={ShieldCheck} text="Datos protegidos" />
+          <TrustItem icon={Truck} text="Despacho a todo Chile" />
+          <TrustItem icon={BadgeCheck} text="Taller de sublimación" />
+        </ul>
       </aside>
     </form>
+  );
+}
+
+function TrustItem({
+  icon: Icon,
+  text,
+}: {
+  icon: typeof Lock;
+  text: string;
+}) {
+  return (
+    <li className="flex items-center gap-2.5">
+      <Icon className="h-4 w-4 shrink-0 text-teal" aria-hidden />
+      {text}
+    </li>
   );
 }
 
@@ -167,20 +246,35 @@ function Field({
   label,
   type = "text",
   required,
+  className,
 }: {
   name: string;
   label: string;
   type?: string;
   required?: boolean;
+  className?: string;
 }) {
   return (
-    <label className="block">
+    <label className={`block ${className ?? ""}`}>
       <span className="text-xs font-bold uppercase tracking-wider text-ink/50">{label}</span>
       <input
         name={name}
         type={type}
         required={required}
-        className="mt-1 w-full rounded-2xl border border-ink/10 px-4 py-3 outline-none focus:ring focus:ring-magenta/30"
+        autoComplete={
+          name === "customerName"
+            ? "name"
+            : name === "email"
+              ? "email"
+              : name === "phone"
+                ? "tel"
+                : name === "address"
+                  ? "street-address"
+                  : name === "city"
+                    ? "address-level2"
+                    : undefined
+        }
+        className="mt-1 w-full rounded-2xl border border-ink/10 bg-paper px-4 py-3 outline-none focus:ring-2 focus:ring-ink/15"
       />
     </label>
   );

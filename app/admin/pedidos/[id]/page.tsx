@@ -1,9 +1,15 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { ChevronLeft, Download } from "lucide-react";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { StatusPill } from "@/components/admin/orders-table";
 import { getOrder } from "@/lib/admin-data";
+import {
+  customFromItem,
+  previewAssetsFromItem,
+  printAssetsFromItem,
+} from "@/lib/admin-order-media";
 import { formatPrice, kindLabel, paymentLabel, sideLabel } from "@/lib/format";
+import { notFound } from "next/navigation";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -14,8 +20,9 @@ export default async function AdminOrderPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/admin/pedidos" className="text-sm text-ink/50 hover:text-ink">
-        ← Pedidos
+      <Link href="/admin/pedidos" className="inline-flex items-center gap-1 text-sm text-ink/50 hover:text-ink">
+        <ChevronLeft className="h-4 w-4" />
+        Pedidos
       </Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -24,6 +31,9 @@ export default async function AdminOrderPage({ params }: Props) {
         </div>
         <StatusPill status={order.status} />
       </div>
+      <p className="mt-3 text-sm text-ink/60">
+        Acá está todo para producir: datos del cliente, archivos para sublimar y la foto de cómo va ubicado el diseño.
+      </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="rounded-3xl border border-ink/10 bg-surface p-5">
@@ -51,16 +61,9 @@ export default async function AdminOrderPage({ params }: Props) {
       <ul className="mt-3 space-y-3">
         {order.items.map((item) => {
           const details = item.details;
-          const custom = details.custom as
-            | {
-                size?: string | null;
-                colorName?: string;
-                printSides?: string[];
-                stamps?: unknown[];
-                text?: string;
-              }
-            | null
-            | undefined;
+          const custom = customFromItem(item);
+          const arts = printAssetsFromItem(item);
+          const previews = previewAssetsFromItem(item);
           return (
             <li key={item.id} className="rounded-3xl border border-ink/10 bg-surface p-5">
               <div className="flex justify-between gap-3">
@@ -101,6 +104,80 @@ export default async function AdminOrderPage({ params }: Props) {
                   </p>
                 </div>
               </div>
+
+              {item.kind === "custom" ? (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink/45">
+                      Archivo para sublimar
+                    </p>
+                    <p className="mt-1 text-xs text-ink/50">
+                      Sticker o imagen original, listo para imprimir.
+                    </p>
+                    {arts.length ? (
+                      <ul className="mt-2 grid grid-cols-2 gap-2">
+                        {arts.map((art) => (
+                          <li key={art.key} className="overflow-hidden rounded-2xl border border-ink/10 bg-paper">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={art.preview} alt="Diseño para sublimar" className="h-36 w-full object-contain p-2" />
+                            <div className="flex items-center justify-between gap-2 px-2 pb-2 text-[11px] text-ink/55">
+                              <span>
+                                {art.side ? sideLabel(art.side) : "Diseño"}
+                                {art.widthPx && art.heightPx ? ` · ${art.widthPx}×${art.heightPx}` : ""}
+                              </span>
+                              <a
+                                href={art.downloadHref}
+                                download={art.name}
+                                className="inline-flex items-center gap-1 font-semibold text-magenta hover:underline"
+                              >
+                                <Download className="h-3 w-3" />
+                                Descargar
+                              </a>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-ink/50">Sin archivo de diseño.</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink/45">
+                      Referencia de posición
+                    </p>
+                    <p className="mt-1 text-xs text-ink/50">Así pidió ubicar el diseño en la prenda.</p>
+                    {previews.length ? (
+                      <ul className="mt-2 grid grid-cols-2 gap-2">
+                        {previews.map((shot) => (
+                          <li key={shot.key} className="overflow-hidden rounded-2xl border border-ink/10 bg-[#1c1815]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={shot.preview}
+                              alt={`Posición ${shot.side ? sideLabel(shot.side) : ""}`}
+                              className="h-36 w-full object-contain"
+                            />
+                            <div className="flex items-center justify-between gap-2 px-2 py-2 text-[11px] text-ink/70">
+                              <span>{shot.side ? sideLabel(shot.side) : "Prenda"}</span>
+                              <a
+                                href={shot.downloadHref}
+                                download={shot.name}
+                                className="inline-flex items-center gap-1 font-semibold text-magenta hover:underline"
+                              >
+                                <Download className="h-3 w-3" />
+                                Descargar
+                              </a>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-ink/50">
+                        Este pedido no incluye foto de posición. Los nuevos sí la guardan.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </li>
           );
         })}

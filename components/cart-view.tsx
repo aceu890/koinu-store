@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
-import { Mascot } from "@/components/mascot";
+import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { ProductMock } from "@/components/product-mock";
+import { WebpayTrustBlock } from "@/components/webpay-marks";
 import { formatPrice, sideLabel } from "@/lib/format";
 import { useCartStore, useCartTotal } from "@/lib/cart-store";
 import type { CartItem, PrintPlacement, PrintSide } from "@/lib/types";
@@ -55,11 +55,9 @@ export function CartView() {
 
   if (!hydrated) {
     return (
-      <div className="flex flex-col items-center py-10">
-        <div className="w-40">
-          <Mascot name="loading" alt="Cargando" size={240} />
-        </div>
-        <p className="mt-3 text-ink/50">Cargando carrito…</p>
+      <div className="flex flex-col items-center py-16 text-ink/50">
+        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+        <p className="mt-3 text-sm">Cargando carrito…</p>
       </div>
     );
   }
@@ -67,9 +65,7 @@ export function CartView() {
   if (!items.length) {
     return (
       <div className="rounded-[2rem] border border-dashed border-ink/20 bg-surface/50 px-6 py-12 text-center">
-        <div className="mx-auto w-48">
-          <Mascot name="keep-shopping-alt" alt="¡Sigue comprando!" size={280} />
-        </div>
+        <ShoppingBag className="mx-auto h-8 w-8 text-ink/30" aria-hidden />
         <p className="mt-4 font-display text-2xl font-bold">El carrito está vacío</p>
         <p className="mt-2 text-ink/60">Personaliza una prenda o recorre la galería.</p>
         <div className="mt-6 flex justify-center gap-3">
@@ -96,24 +92,32 @@ export function CartView() {
             className="flex gap-4 rounded-3xl border border-ink/10 bg-surface/70 p-4"
           >
             <div className="flex max-w-[11rem] shrink-0 flex-wrap gap-1">
-              {cartPreviewSides(item).map((side) => (
-                <div key={side} className="h-28 w-20 rounded-2xl bg-mock px-1">
-                  <ProductMock
-                    kind={item.productKind}
-                    color={item.color ?? "#F7F4EF"}
-                    design={item.design}
-                    text={item.custom?.text}
-                    textColor={item.custom?.textColor}
-                    textFont={item.custom?.textFont}
-                    textPlacement={item.custom?.textPlacements?.[side] ?? null}
-                    position={side === "back" ? "back" : item.custom?.position}
-                    view={side}
-                    stamps={item.custom?.stamps}
-                    artworkUrl={item.custom?.artworkDataUrl}
-                    placement={placementForSide(item, side)}
-                  />
-                </div>
-              ))}
+              {cartPreviewSides(item).map((side) => {
+                const preview = item.custom?.previewBySide?.[side];
+                return (
+                  <div key={side} className="h-28 w-20 overflow-hidden rounded-2xl bg-mock px-1">
+                    {preview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={preview} alt="" className="h-full w-full object-contain" />
+                    ) : (
+                      <ProductMock
+                        kind={item.productKind}
+                        color={item.color ?? "#F7F4EF"}
+                        design={item.design}
+                        text={item.custom?.text}
+                        textColor={item.custom?.textColor}
+                        textFont={item.custom?.textFont}
+                        textPlacement={item.custom?.textPlacements?.[side] ?? null}
+                        position={side === "back" ? "back" : item.custom?.position}
+                        view={side}
+                        stamps={item.custom?.stamps}
+                        artworkUrl={item.custom?.artworkDataUrl}
+                        placement={placementForSide(item, side)}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
@@ -178,10 +182,13 @@ export function CartView() {
         </p>
         <Link
           href="/checkout"
-          className="mt-6 block rounded-full bg-magenta py-3 text-center font-display font-bold text-white hover:bg-magenta-dark"
+          className="btn-pago mt-6 block rounded-full py-3 text-center font-display font-bold text-white"
         >
-          Continuar al checkout
+          Continuar al pago
         </Link>
+        <div className="mt-4">
+          <WebpayTrustBlock onDark compact />
+        </div>
       </aside>
     </div>
   );

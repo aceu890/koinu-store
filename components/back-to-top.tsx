@@ -35,6 +35,13 @@ export function BackToTop() {
   }, [pathname]);
 
   if (!show) return null;
+  if (
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/carrito") ||
+    pathname.startsWith("/pedido")
+  ) {
+    return null;
+  }
 
   return (
     <button

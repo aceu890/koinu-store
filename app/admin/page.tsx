@@ -4,6 +4,7 @@ import { StatusPill } from "@/components/admin/orders-table";
 import { getDashboardStats } from "@/lib/admin-data";
 import { isDefaultAdminPassword } from "@/lib/admin-auth";
 import { formatPrice } from "@/lib/format";
+import { isSupabaseConfigured, isSupabaseWriteConfigured } from "@/lib/supabase/config";
 
 export default async function AdminHomePage() {
   const stats = await getDashboardStats();
@@ -30,6 +31,21 @@ export default async function AdminHomePage() {
           publicar.
         </p>
       ) : null}
+      {!isSupabaseConfigured() ? (
+        <p className="mt-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3 text-sm">
+          Base local: pedidos y productos se guardan en este computador. Cuando pegues las claves de
+          Supabase en <code className="font-semibold">.env.local</code>, todo pasa a la nube.
+        </p>
+      ) : !isSupabaseWriteConfigured() ? (
+        <p className="mt-3 rounded-2xl border border-amber/40 bg-amber/15 px-4 py-3 text-sm">
+          Supabase está leyendo, pero falta <code className="font-semibold">SUPABASE_SERVICE_ROLE_KEY</code>{" "}
+          para guardar productos, fotos y cambiar el estado de los pedidos.
+        </p>
+      ) : (
+        <p className="mt-3 rounded-2xl border border-teal/40 bg-teal/15 px-4 py-3 text-sm">
+          Base: Supabase. Catálogo, pedidos y fotos de sublimación van a la nube.
+        </p>
+      )}
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => {
@@ -48,8 +64,14 @@ export default async function AdminHomePage() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
-          href="/admin/pedidos"
+          href="/admin/estadisticas"
           className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper"
+        >
+          Ver estadísticas
+        </Link>
+        <Link
+          href="/admin/pedidos"
+          className="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold"
         >
           Ver pedidos
         </Link>
@@ -78,7 +100,7 @@ export default async function AdminHomePage() {
                   <p className="font-semibold">{order.customerName}</p>
                   <p className="text-xs text-ink/45">
                     {new Date(order.createdAt).toLocaleString("es-CL")} · {order.items.length}{" "}
-                    {order.items.length === 1 ? "ítem" : "ítems"}
+                    {order.items.length === 1 ? "ítem" : "ítems"} · Ver detalle
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

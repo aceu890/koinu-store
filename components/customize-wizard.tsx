@@ -7,6 +7,8 @@ import { ProductMock } from "@/components/product-mock";
 import { PrintEditor } from "@/components/print-editor";
 import { StickerPicker } from "@/components/sticker-picker";
 import { CUSTOMIZABLE_BASES } from "@/lib/catalog";
+import { captureDesignPreviews } from "@/lib/garment-preview";
+import { compressImageSrc, loadHtmlImage } from "@/lib/image-client";
 import type { LibrarySticker } from "@/lib/sticker-library";
 import { useCartStore } from "@/lib/cart-store";
 import { formatPrice, kindLabel, sideLabel, sideTo } from "@/lib/format";
@@ -54,6 +56,7 @@ export function CustomizeWizard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const base = useMemo(
     () => CUSTOMIZABLE_BASES.find((item) => item.slug === kind)!,
@@ -130,37 +133,41 @@ export function CustomizeWizard() {
     );
   }
 
-  function readImage(file: File) {
-    return new Promise<{
-      url: string;
-      width: number;
-      height: number;
-    } | null>((resolve) => {
-      if (file.size > 8 * 1024 * 1024) {
-        setError("Cada imagen debe pesar menos de 8 MB.");
-        resolve(null);
-        return;
-      }
+  async function readImage(file: File) {
+    if (file.size > 8 * 1024 * 1024) {
+      setError("Cada imagen debe pesar menos de 8 MB.");
+      return null;
+    }
+    const originalUrl = await new Promise<string | null>((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => {
-        const url = typeof reader.result === "string" ? reader.result : null;
-        if (!url) {
-          resolve(null);
-          return;
-        }
-        const image = new Image();
-        image.onload = () =>
-          resolve({
-            url,
-            width: image.naturalWidth,
-            height: image.naturalHeight,
-          });
-        image.onerror = () => resolve(null);
-        image.src = url;
-      };
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(file);
     });
+    if (!originalUrl) return null;
+    try {
+      const image = await loadHtmlImage(originalUrl);
+      const preview = await compressImageSrc(originalUrl);
+      let printFileUrl = originalUrl;
+      try {
+        const form = new FormData();
+        form.append("print", file, file.name);
+        const response = await fetch("/api/orders/media", { method: "POST", body: form });
+        const data = (await response.json()) as { urls?: Record<string, string> };
+        if (response.ok && data.urls?.print) printFileUrl = data.urls.print;
+      } catch {
+        // se guarda el original al confirmar el pedido
+      }
+      return {
+        url: preview.url,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        printFileUrl,
+        printFileName: file.name,
+      };
+    } catch {
+      return null;
+    }
   }
 
   async function addFiles(fileList: FileList | File[] | null) {
@@ -170,7 +177,15 @@ export function CustomizeWizard() {
     const targetPosition = position;
     const files = Array.from(fileList).slice(0, 6);
     const loaded = (await Promise.all(files.map(readImage))).filter(
-      (item): item is { url: string; width: number; height: number } => Boolean(item),
+      (
+        item,
+      ): item is {
+        url: string;
+        width: number;
+        height: number;
+        printFileUrl?: string;
+        printFileName?: string;
+      } => Boolean(item),
     );
     if (!loaded.length) return;
 
@@ -197,7 +212,15 @@ export function CustomizeWizard() {
       );
     }
     addArtwork(
-      [{ url: sticker.src, width: sticker.width, height: sticker.height }],
+      [
+        {
+          url: sticker.src,
+          width: sticker.width,
+          height: sticker.height,
+          printFileUrl: sticker.printSrc,
+          printFileName: sticker.printFileName,
+        },
+      ],
       view,
       kind,
       position,
@@ -206,7 +229,13 @@ export function CustomizeWizard() {
   }
 
   function addArtwork(
-    loaded: { url: string; width: number; height: number }[],
+    loaded: {
+      url: string;
+      width: number;
+      height: number;
+      printFileUrl?: string;
+      printFileName?: string;
+    }[],
     targetView: PrintSide,
     targetKind: ProductKind,
     targetPosition: PrintPosition,
@@ -222,6 +251,8 @@ export function CustomizeWizard() {
       id: crypto.randomUUID(),
       side: targetView,
       artworkDataUrl: image.url,
+      printFileUrl: image.printFileUrl ?? image.url,
+      printFileName: image.printFileName,
       widthPx: image.width,
       heightPx: image.height,
       placement:
@@ -327,7 +358,7 @@ export function CustomizeWizard() {
     setStep((value) => Math.min(value + 1, STEPS.length - 1));
   }
 
-  function addToCart() {
+  async function addToCart() {
     if (!text.trim() && !stamps.length) {
       setError("Elige un diseño listo, sube una imagen o escribe un texto.");
       setStep(2);
@@ -339,41 +370,61 @@ export function CustomizeWizard() {
       (side) =>
         stamps.some((stamp) => stamp.side === side) || Boolean(text.trim() && textPlacements[side]),
     );
+    const sides = printSides.length ? printSides : (["front"] as PrintSide[]);
 
-    addItem({
-      kind: "custom",
-      name: `${base.name} personalizada`,
-      unitPrice: base.basePrice,
-      quantity: qty,
-      productKind: kind,
-      color: color.hex,
-      colorName: color.name,
-      size,
-      custom: {
+    setSaving(true);
+    setError("");
+    try {
+      const previewBySide = await captureDesignPreviews({
         kind,
         color: color.hex,
-        colorName: color.name,
-        size,
+        sides,
+        stamps,
         text: text.trim(),
         textColor,
         textFont,
         textPlacements: text.trim() ? textPlacements : undefined,
-        position: view === "back" ? "back" : position,
-        artworkDataUrl: first?.artworkDataUrl ?? null,
-        placement: first?.placement,
-        placementFront: stamps.find((stamp) => stamp.side === "front")?.placement,
-        placementBack: stamps.find((stamp) => stamp.side === "back")?.placement,
-        placementLeft: stamps.find((stamp) => stamp.side === "left")?.placement,
-        placementRight: stamps.find((stamp) => stamp.side === "right")?.placement,
-        printSides,
-        stamps,
-        artworkWidthPx: first?.widthPx,
-        artworkHeightPx: first?.heightPx,
-        printWidthCm: printCm?.widthCm,
-        printHeightCm: printCm?.heightCm,
-      },
-    });
-    router.push("/carrito");
+      });
+
+      addItem({
+        kind: "custom",
+        name: `${base.name} personalizada`,
+        unitPrice: base.basePrice,
+        quantity: qty,
+        productKind: kind,
+        color: color.hex,
+        colorName: color.name,
+        size,
+        custom: {
+          kind,
+          color: color.hex,
+          colorName: color.name,
+          size,
+          text: text.trim(),
+          textColor,
+          textFont,
+          textPlacements: text.trim() ? textPlacements : undefined,
+          position: view === "back" ? "back" : position,
+          artworkDataUrl: first?.printFileUrl ?? first?.artworkDataUrl ?? null,
+          placement: first?.placement,
+          placementFront: stamps.find((stamp) => stamp.side === "front")?.placement,
+          placementBack: stamps.find((stamp) => stamp.side === "back")?.placement,
+          placementLeft: stamps.find((stamp) => stamp.side === "left")?.placement,
+          placementRight: stamps.find((stamp) => stamp.side === "right")?.placement,
+          printSides,
+          stamps,
+          artworkWidthPx: first?.widthPx,
+          artworkHeightPx: first?.heightPx,
+          printWidthCm: printCm?.widthCm,
+          printHeightCm: printCm?.heightCm,
+          previewBySide,
+        },
+      });
+      router.push("/carrito");
+    } catch {
+      setError("No se pudo guardar la foto del diseño. Inténtalo de nuevo.");
+      setSaving(false);
+    }
   }
 
   return (
@@ -772,10 +823,11 @@ export function CustomizeWizard() {
             <button
               type="button"
               onClick={addToCart}
-              className="btn-personaliza mt-6 hidden w-full items-center justify-center gap-2 rounded-full bg-magenta px-6 py-4 font-display text-lg font-bold text-white hover:bg-magenta-dark lg:inline-flex"
+              disabled={saving}
+              className="btn-personaliza mt-6 hidden w-full items-center justify-center gap-2 rounded-full bg-magenta px-6 py-4 font-display text-lg font-bold text-white hover:bg-magenta-dark disabled:opacity-60 lg:inline-flex"
             >
               <Sparkles className="h-5 w-5" />
-              Agregar al carrito
+              {saving ? "Guardando diseño…" : "Agregar al carrito"}
             </button>
           </div>
         ) : null}
@@ -871,10 +923,11 @@ export function CustomizeWizard() {
             <button
               type="button"
               onClick={addToCart}
-              className="btn-personaliza inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-magenta px-4 text-sm font-bold text-white touch-manipulation"
+              disabled={saving}
+              className="btn-personaliza inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-magenta px-4 text-sm font-bold text-white touch-manipulation disabled:opacity-60"
             >
               <Sparkles className="h-4 w-4" />
-              Agregar al carrito
+              {saving ? "Guardando…" : "Agregar al carrito"}
             </button>
           )}
         </div>
