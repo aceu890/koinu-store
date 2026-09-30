@@ -1,0 +1,32 @@
+name: Keep Supabase alive
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query products (actividad real en Postgres)
+        env:
+          URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -e
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "Agrega los secrets NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en el repo."
+            exit 1
+          fi
+          URL="${URL%/}"
+          code=$(curl -sS -o /tmp/keep-alive.json -w "%{http_code}" \
+            "$URL/rest/v1/products?select=id&limit=1" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            -H "Accept: application/json")
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            exit 1
+          fi
+          echo "Keep-alive OK"

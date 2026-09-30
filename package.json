@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "keep-alive": "node --env-file=.env.local scripts/keep-supabase-alive.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

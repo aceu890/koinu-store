@@ -29,6 +29,8 @@ SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
 
 4. Reinicia `npm run dev`. En `/admin` deberías ver “Base: Supabase”.
 
+El plan gratis pausa el proyecto a los 7 días sin consultas a la base. Hay un ping diario (GitHub Actions y, si publicas en Vercel, un cron a `/api/keep-alive`) que lee un producto para generar actividad. En GitHub: **Settings → Secrets and variables → Actions** y agrega `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Luego **Actions → Keep Supabase alive → Run workflow** una vez para probar.
+
 Los pedidos van a `orders` / `order_items`. Las fotos de producto y el arte para sublimar van a Storage. Sin esas variables, el checkout sigue funcionando en modo local (`data/store.json`).
 
 ## Dashboard
