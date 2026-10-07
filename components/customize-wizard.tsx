@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Sparkles, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Minus, Plus, Sparkles, Trash2, Type, Upload } from "lucide-react";
 import { ProductMock } from "@/components/product-mock";
 import { PrintEditor } from "@/components/print-editor";
 import { StickerPicker } from "@/components/sticker-picker";
@@ -512,7 +512,7 @@ export function CustomizeWizard() {
             <p className="mt-1 text-sm text-ink/60">
               Elige la base para continuar. Después sumamos color, talla y diseño.
             </p>
-            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:grid-cols-5 sm:gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:grid-cols-3 sm:gap-3">
               {CUSTOMIZABLE_BASES.map((item) => (
                 <button
                   key={item.slug}
@@ -792,66 +792,160 @@ export function CustomizeWizard() {
 
         {step === 3 ? (
           <div>
-            <h2 className="font-display text-xl font-bold sm:text-2xl">Revisa y agrega al carrito</h2>
-            <ul className="mt-4 space-y-1 text-sm text-ink/80">
-              <li>{kindLabel(kind)} · {color.name}{size ? ` · talla ${size}` : ""}</li>
-              <li className="hidden sm:list-item">
-                Prenda: {formatCm(measures.widthCm)} ancho × {formatCm(measures.lengthCm).replace(" cm", "")} largo
-              </li>
-              <li>
-                {productViews.map((side, index) => (
-                  <span key={side}>
-                    {index ? " · " : ""}
-                    {sideLabel(side)}:{" "}
-                    {sideCounts[side]
-                      ? `${sideCounts[side]} ${sideCounts[side] === 1 ? "imagen" : "imágenes"}`
-                      : "sin estampa"}
-                  </span>
-                ))}
-              </li>
-              {printCm && selected ? (
-                <li className="hidden sm:list-item">
-                  {`Seleccionada (${sideLabel(selected.side).toLowerCase()}): ${formatCm(printCm.widthCm)} × ${formatCm(printCm.heightCm).replace(" cm", "")}`}
-                </li>
-              ) : null}
-              {selected ? (
-                <li className="hidden sm:list-item">
-                  Archivo: {selected.widthPx} × {selected.heightPx} px
-                </li>
-              ) : null}
-              <li>
-                {text.trim()
-                  ? `Texto: “${text.trim()}” · ${printFontLabel(textFont)}${
-                      Object.keys(textPlacements).length
-                        ? ` · ${Object.keys(textPlacements)
-                            .map((side) => sideLabel(side))
-                            .join(", ")}`
-                        : ""
-                    }`
-                  : stamps.length
-                    ? "Sin texto extra"
-                    : "Sin imagen"}
-              </li>
-            </ul>
-            <div className="mt-5 flex items-center gap-3">
-              <span className="text-sm">Cantidad</span>
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={qty}
-                onChange={(event) => setQty(Number(event.target.value) || 1)}
-                className="w-20 rounded-xl border border-ink/10 px-3 py-2"
-              />
-            </div>
-            <p className="mt-4 font-display text-3xl font-bold">
-              {formatPrice(base.basePrice * qty)}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-magenta sm:text-xs">
+              Listo para el taller
             </p>
+            <h2 className="mt-1 font-display text-xl font-bold sm:text-2xl">Revisa tu pieza</h2>
+            <p className="mt-1 text-sm leading-relaxed text-ink/60">
+              Confirmá color, caras y cantidad. El diseño queda guardado en el pedido.
+            </p>
+
+            <div className="mt-5 overflow-hidden rounded-2xl border border-ink/10 bg-paper shadow-[0_1px_2px_rgba(22,18,15,0.06)] sm:rounded-3xl">
+              <div className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                <div className="grid h-20 w-16 shrink-0 place-items-center rounded-2xl bg-ink/4 sm:h-24 sm:w-20">
+                  <div className="h-18 w-14 sm:h-22 sm:w-16">
+                    <ProductMock kind={kind} color={color.hex} hidePrint />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-lg font-bold leading-tight sm:text-xl">{base.name}</p>
+                  <p className="mt-0.5 hidden text-xs text-ink/50 sm:block">
+                    {formatCm(measures.widthCm)} ancho × {formatCm(measures.lengthCm).replace(" cm", "")} largo
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-surface px-2.5 py-1 text-xs font-semibold">
+                      <span
+                        className="h-3.5 w-3.5 rounded-full border border-ink/15"
+                        style={{ background: color.hex }}
+                      />
+                      {color.name}
+                    </span>
+                    {size ? (
+                      <span className="rounded-full border border-ink/10 bg-surface px-2.5 py-1 text-xs font-semibold">
+                        Talla {size}
+                      </span>
+                    ) : null}
+                    <span className="rounded-full bg-magenta/10 px-2.5 py-1 text-xs font-bold text-magenta">
+                      {kindLabel(kind)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`grid border-t border-ink/8 ${
+                  productViews.length > 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"
+                }`}
+              >
+                {productViews.map((side) => {
+                  const count = sideCounts[side];
+                  const hasText = Boolean(textPlacements[side]);
+                  const ready = count > 0 || hasText;
+                  return (
+                    <div
+                      key={side}
+                      className="border-r border-b border-ink/8 px-3 py-2.5 sm:px-4 sm:py-3"
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-ink/40">
+                        {sideLabel(side)}
+                      </p>
+                      <p
+                        className={`mt-0.5 inline-flex items-center gap-1 text-xs font-bold sm:text-sm ${
+                          ready ? "text-ink" : "text-ink/35"
+                        }`}
+                      >
+                        {ready ? <Check className="h-3.5 w-3.5 text-magenta" /> : null}
+                        {count
+                          ? `${count} ${count === 1 ? "estampa" : "estampas"}`
+                          : hasText
+                            ? "Texto"
+                            : "Sin arte"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {text.trim() ? (
+                <div className="flex items-start gap-2.5 border-t border-ink/8 bg-magenta/4 px-3 py-3 sm:px-4">
+                  <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-magenta/15 text-magenta">
+                    <Type className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-ink/40">
+                      Texto · {printFontLabel(textFont)}
+                      {Object.keys(textPlacements).length
+                        ? ` · ${Object.keys(textPlacements).map((side) => sideLabel(side)).join(", ")}`
+                        : ""}
+                    </p>
+                    <p
+                      className="mt-0.5 truncate text-sm font-semibold text-ink"
+                      style={printFontStyle(textFont)}
+                    >
+                      “{text.trim()}”
+                    </p>
+                  </div>
+                </div>
+              ) : stamps.length ? (
+                <p className="border-t border-ink/8 px-3 py-2.5 text-xs text-ink/45 sm:px-4">
+                  Sin texto extra · las estampas van en las caras marcadas.
+                </p>
+              ) : (
+                <p className="border-t border-ink/8 px-3 py-2.5 text-xs text-magenta-dark sm:px-4">
+                  Todavía no hay diseño. Volvé a Diseño para subir una imagen o un sticker.
+                </p>
+              )}
+
+              {printCm && selected ? (
+                <p className="hidden border-t border-ink/8 px-4 py-2 text-xs text-ink/45 sm:block">
+                  Estampa activa ({sideLabel(selected.side).toLowerCase()}): {formatCm(printCm.widthCm)} ×{" "}
+                  {formatCm(printCm.heightCm).replace(" cm", "")}
+                  {selected.widthPx ? ` · ${selected.widthPx} × ${selected.heightPx} px` : ""}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-[linear-gradient(135deg,#1a1410,#2a211c)] px-4 py-3.5 text-on-panel sm:rounded-3xl sm:px-5 sm:py-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber">Cantidad</p>
+                <div className="mt-1.5 inline-flex items-center rounded-full bg-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setQty((value) => Math.max(1, value - 1))}
+                    className="grid h-9 w-9 place-items-center rounded-full text-on-panel/80 transition hover:bg-white/10"
+                    aria-label="Quitar una"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-7 text-center font-display text-lg font-bold tabular-nums">{qty}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQty((value) => Math.min(20, value + 1))}
+                    className="grid h-9 w-9 place-items-center rounded-full text-on-panel/80 transition hover:bg-white/10"
+                    aria-label="Agregar una"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber">Total</p>
+                <p className="mt-0.5 font-display text-2xl font-bold leading-none sm:text-3xl">
+                  {formatPrice(base.basePrice * qty)}
+                </p>
+                {qty > 1 ? (
+                  <p className="mt-1 text-[11px] text-on-panel/50">
+                    {formatPrice(base.basePrice)} c/u
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={addToCart}
               disabled={saving}
-              className="btn-personaliza mt-6 hidden w-full items-center justify-center gap-2 rounded-full bg-magenta px-6 py-4 font-display text-lg font-bold text-white hover:bg-magenta-dark disabled:opacity-60 lg:inline-flex"
+              className="btn-personaliza mt-5 hidden w-full items-center justify-center gap-2 rounded-full bg-magenta px-6 py-4 font-display text-lg font-bold text-white shadow-[0_10px_24px_rgba(255,61,127,0.28)] hover:bg-magenta-dark disabled:opacity-60 lg:inline-flex"
             >
               <Sparkles className="h-5 w-5" />
               {saving ? "Guardando diseño…" : "Agregar al carrito"}

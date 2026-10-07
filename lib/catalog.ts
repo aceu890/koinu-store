@@ -250,6 +250,21 @@ export const CUSTOMIZABLE_BASES: CustomizableBase[] = [
       { name: "Teal", hex: "#0F766E" },
     ],
   },
+  {
+    slug: "print3d",
+    name: "Impresión 3D",
+    description: "Pieza impresa lista para personalizar con tu diseño o texto.",
+    basePrice: 14990,
+    sizes: ["Única"],
+    colors: [
+      { name: "Blanco", hex: "#F8FAFC" },
+      { name: "Negro", hex: "#171411" },
+      { name: "Rosa", hex: "#F9A8D4" },
+      { name: "Celeste", hex: "#7DD3FC" },
+      { name: "Menta", hex: "#6EE7B7" },
+      { name: "Mostaza", hex: "#EAB308" },
+    ],
+  },
 ];
 
 export function getProductBySlug(slug: string) {
