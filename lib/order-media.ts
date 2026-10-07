@@ -1,5 +1,3 @@
-import { copyFile, mkdir, writeFile } from "fs/promises";
-import path from "path";
 import type { CustomDetails, PrintStamp } from "@/lib/types";
 import { ORDER_ART_BUCKET, isSupabasePublicUrl, uploadPublicFile } from "@/lib/supabase/storage";
 
@@ -19,24 +17,7 @@ function keepUrl(value: string | null | undefined) {
   return null;
 }
 
-function publicFilePath(url: string) {
-  const clean = decodeURIComponent(url.split("?")[0]).replace(/^\/+/, "");
-  const abs = path.resolve(process.cwd(), "public", clean);
-  const root = path.resolve(process.cwd(), "public");
-  if (!abs.startsWith(root)) return null;
-  return abs;
-}
-
-function orderUrl(dir: string, file: string) {
-  return `/uploads/orders/${path.basename(dir)}/${file}`;
-}
-
-async function saveBytes(
-  bytes: Buffer,
-  mime: string,
-  dir: string,
-  name: string,
-) {
+async function saveBytes(bytes: Buffer, mime: string, orderId: string, name: string) {
   const ext = extFor(mime);
   const file = `${name}.${ext}`;
   const contentType = mime.includes("png")
@@ -47,48 +28,32 @@ async function saveBytes(
 
   const remote = await uploadPublicFile(
     ORDER_ART_BUCKET,
-    `orders/${path.basename(dir)}/${file}`,
+    `orders/${orderId}/${file}`,
     bytes,
     contentType,
   );
-  if (remote) return remote;
-
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, file), bytes);
-  return orderUrl(dir, file);
+  if (!remote) {
+    throw new Error("Falta Storage de Supabase para guardar las imágenes");
+  }
+  return remote;
 }
 
-async function saveDataUrl(dataUrl: string, dir: string, name: string) {
+async function saveDataUrl(dataUrl: string, orderId: string, name: string) {
   const match = dataUrl.match(DATA_URL);
   if (!match) return keepUrl(dataUrl);
-  return saveBytes(Buffer.from(match[2], "base64"), match[1], dir, name);
+  return saveBytes(Buffer.from(match[2], "base64"), match[1], orderId, name);
 }
 
-async function persistAsset(value: string | null | undefined, dir: string, name: string) {
+async function persistAsset(value: string | null | undefined, orderId: string, name: string) {
   if (!value || value === "[uploaded]") return null;
-  if (value.startsWith("data:")) return saveDataUrl(value, dir, name);
-  const kept = keepUrl(value);
-  if (!kept) return null;
-  if (kept.startsWith("/uploads/orders/") || isSupabasePublicUrl(kept) || kept.startsWith("/Stickers/")) {
-    return kept;
-  }
-  const src = publicFilePath(kept);
-  if (!src) return kept;
-  const ext = path.extname(src) || ".png";
-  const file = `${name}${ext}`;
-  try {
-    await mkdir(dir, { recursive: true });
-    await copyFile(src, path.join(dir, file));
-    return orderUrl(dir, file);
-  } catch {
-    return kept;
-  }
+  if (value.startsWith("data:")) return saveDataUrl(value, orderId, name);
+  return keepUrl(value);
 }
 
-async function persistStamp(stamp: PrintStamp, dir: string, name: string): Promise<PrintStamp> {
-  const preview = (await persistAsset(stamp.artworkDataUrl, dir, `${name}-preview`)) ?? stamp.artworkDataUrl;
+async function persistStamp(stamp: PrintStamp, orderId: string, name: string): Promise<PrintStamp> {
+  const preview = (await persistAsset(stamp.artworkDataUrl, orderId, `${name}-preview`)) ?? stamp.artworkDataUrl;
   const printFileUrl =
-    (await persistAsset(stamp.printFileUrl ?? stamp.artworkDataUrl, dir, `${name}-sublimar`)) ?? preview;
+    (await persistAsset(stamp.printFileUrl ?? stamp.artworkDataUrl, orderId, `${name}-sublimar`)) ?? preview;
   return {
     ...stamp,
     artworkDataUrl: preview,
@@ -101,12 +66,11 @@ export async function persistCustomDetails(
   orderId: string,
   itemKey: string,
 ): Promise<CustomDetails> {
-  const dir = path.join(process.cwd(), "public", "uploads", "orders", orderId);
   const prefix = itemKey.replace(/[^a-z0-9_-]/gi, "").slice(0, 24) || "item";
 
   const stamps = custom.stamps
     ? await Promise.all(
-        custom.stamps.map((stamp, index) => persistStamp(stamp, dir, `${prefix}-art-${index + 1}`)),
+        custom.stamps.map((stamp, index) => persistStamp(stamp, orderId, `${prefix}-art-${index + 1}`)),
       )
     : custom.stamps;
 
@@ -115,7 +79,7 @@ export async function persistCustomDetails(
         await Promise.all(
           Object.entries(custom.previewBySide).map(async ([side, url]) => {
             if (!url) return [side, url];
-            return [side, (await persistAsset(url, dir, `${prefix}-pos-${side}`)) ?? url];
+            return [side, (await persistAsset(url, orderId, `${prefix}-pos-${side}`)) ?? url];
           }),
         ),
       )
@@ -124,7 +88,7 @@ export async function persistCustomDetails(
   const artworkDataUrl =
     stamps?.[0]?.printFileUrl ??
     stamps?.[0]?.artworkDataUrl ??
-    (await persistAsset(custom.artworkDataUrl, dir, `${prefix}-art`)) ??
+    (await persistAsset(custom.artworkDataUrl, orderId, `${prefix}-art`)) ??
     custom.artworkDataUrl ??
     null;
 

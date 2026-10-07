@@ -1,5 +1,3 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 import { ORDER_ART_BUCKET, uploadPublicFile } from "@/lib/supabase/storage";
 
@@ -29,7 +27,6 @@ export async function POST(request: Request) {
 
   const batch = crypto.randomUUID();
   const urls: Record<string, string> = {};
-  let localDir: string | null = null;
 
   for (const [key, file] of entries) {
     if (file.size > 8 * 1024 * 1024) {
@@ -50,21 +47,17 @@ export async function POST(request: Request) {
         bytes,
         file.type || `image/${ext === "jpg" ? "jpeg" : ext}`,
       );
-      if (remote) {
-        urls[key] = remote;
-        continue;
+      if (!remote) {
+        return NextResponse.json(
+          { error: "Falta Storage de Supabase para guardar las imágenes" },
+          { status: 500 },
+        );
       }
+      urls[key] = remote;
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo subir a Storage";
       return NextResponse.json({ error: message }, { status: 500 });
     }
-
-    if (!localDir) {
-      localDir = path.join(process.cwd(), "public", "uploads", "orders", batch);
-      await mkdir(localDir, { recursive: true });
-    }
-    await writeFile(path.join(localDir, name), bytes);
-    urls[key] = `/uploads/orders/${batch}/${name}`;
   }
 
   return NextResponse.json({ urls });

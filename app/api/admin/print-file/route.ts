@@ -1,16 +1,13 @@
-import { readFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
 import { isAdminSession } from "@/lib/admin-auth";
 import { isSupabasePublicUrl } from "@/lib/supabase/storage";
 
-function safePublicPath(url: string) {
+function safePublicHref(url: string) {
   const clean = decodeURIComponent(url.split("?")[0]).replace(/^\/+/, "").replace(/\\/g, "/");
   if (!clean.startsWith("uploads/orders/") && !clean.startsWith("Stickers/")) return null;
-  const abs = path.resolve(process.cwd(), "public", clean);
-  const root = path.resolve(process.cwd(), "public");
-  if (!abs.startsWith(root + path.sep) && abs !== root) return null;
-  return abs;
+  if (clean.includes("..")) return null;
+  return `/${clean}`;
 }
 
 function safeName(value: string | null, fallback: string) {
@@ -59,14 +56,20 @@ export async function GET(request: Request) {
     }
   }
 
-  const filePath = safePublicPath(src);
-  if (!filePath) {
+  const href = safePublicHref(src);
+  if (!href) {
     return NextResponse.json({ error: "Archivo inválido" }, { status: 400 });
   }
 
   try {
-    const bytes = await readFile(filePath);
-    return attachment(bytes, name, mimeFromName(filePath));
+    const origin = new URL(request.url).origin;
+    const response = await fetch(new URL(href, origin));
+    if (!response.ok) {
+      return NextResponse.json({ error: "No se encontró el archivo" }, { status: 404 });
+    }
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const type = response.headers.get("content-type") || mimeFromName(name);
+    return attachment(bytes, name, type);
   } catch {
     return NextResponse.json({ error: "No se encontró el archivo" }, { status: 404 });
   }

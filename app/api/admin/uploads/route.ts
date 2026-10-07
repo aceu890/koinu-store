@@ -1,5 +1,3 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 import { isAdminSession } from "@/lib/admin-auth";
 import { PRODUCT_IMAGES_BUCKET, uploadPublicFile } from "@/lib/supabase/storage";
@@ -35,16 +33,15 @@ export async function POST(request: Request) {
 
   try {
     const remote = await uploadPublicFile(PRODUCT_IMAGES_BUCKET, name, bytes, file.type);
-    if (remote) {
-      return NextResponse.json({ url: remote });
+    if (!remote) {
+      return NextResponse.json(
+        { error: "Falta Storage de Supabase para guardar las imágenes" },
+        { status: 500 },
+      );
     }
+    return NextResponse.json({ url: remote });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo subir a Storage";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const dir = path.join(process.cwd(), "public", "uploads", "products");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), bytes);
-  return NextResponse.json({ url: `/uploads/products/${name}` });
 }
