@@ -1,5 +1,4 @@
 import { OrdersTable } from "@/components/admin/orders-table";
-import { SimulateOrders } from "@/components/admin/simulate-orders";
 import { listOrders } from "@/lib/admin-data";
 
 export default async function AdminOrdersPage() {
@@ -12,9 +11,8 @@ export default async function AdminOrdersPage() {
       <p className="mt-2 max-w-2xl text-sm text-ink/60">
         {orders.length
           ? "Estampa y posición van juntas en cada pedido. Descargá desde las miniaturas o entrá a Ver detalle."
-          : "Cuando confirmen una compra, el pedido llega a esta lista. Mientras tanto podés simular pedidos de ejemplo."}
+          : "Cuando confirmen una compra, el pedido llega a esta lista."}
       </p>
-      <SimulateOrders />
       <div className="mt-6">
         <OrdersTable orders={orders} />
       </div>

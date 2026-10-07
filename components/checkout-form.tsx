@@ -123,7 +123,10 @@ export function CheckoutForm() {
         <fieldset className="rounded-3xl border border-ink/10 bg-surface p-6 sm:p-7">
           <legend className="sr-only">Medio de pago</legend>
           <h2 className="font-display text-xl font-bold">Medio de pago</h2>
-          <p className="mt-1 text-sm text-ink/55">Elige cómo quieres pagar. El cobro se confirma después de crear el pedido.</p>
+          <p className="mt-1 text-sm text-ink/55">
+            Al confirmar, el pedido queda en el taller. Webpay se conecta después; por ahora el cobro se coordina
+            aparte.
+          </p>
 
           <label
             className={`mt-5 flex cursor-pointer gap-4 rounded-2xl border p-4 transition ${
@@ -202,14 +205,12 @@ export function CheckoutForm() {
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Procesando pedido…
               </>
-            ) : method === "webpay" ? (
-              "Confirmar y pagar con Webpay"
             ) : (
               "Confirmar pedido"
             )}
           </button>
           <p className="mt-3 text-center text-xs text-ink/45">
-            Al confirmar, creamos tu orden. El pago con Webpay lo coordinamos después.
+            Al confirmar, el pedido aparece en el taller. El pago con tarjeta se habilita cuando esté Webpay.
           </p>
         </div>
 
