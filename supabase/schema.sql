@@ -54,25 +54,11 @@ create policy "products_public_read"
   on public.products for select
   using (true);
 
+-- Pedidos: sin políticas para anon. La app lee/escribe con service role (bypassa RLS).
 drop policy if exists "orders_public_insert" on public.orders;
-create policy "orders_public_insert"
-  on public.orders for insert
-  with check (true);
-
 drop policy if exists "orders_public_read_own" on public.orders;
-create policy "orders_public_read_own"
-  on public.orders for select
-  using (true);
-
 drop policy if exists "order_items_public_insert" on public.order_items;
-create policy "order_items_public_insert"
-  on public.order_items for insert
-  with check (true);
-
 drop policy if exists "order_items_public_read" on public.order_items;
-create policy "order_items_public_read"
-  on public.order_items for select
-  using (true);
 
 insert into public.products
   (slug, name, description, price, category, kind, design, colors, sizes, featured)

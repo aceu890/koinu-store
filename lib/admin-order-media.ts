@@ -43,33 +43,33 @@ export function customFromItem(item: AdminOrderItem): CustomDetailsView | null {
 
 export function printAssetsFromItem(item: AdminOrderItem): OrderPrintAsset[] {
   const custom = customFromItem(item);
-  const arts = (custom?.stamps ?? [])
-    .map((stamp, index) => {
-      const src = stampPrintUrl({
-        artworkDataUrl: stamp.artworkDataUrl ?? "",
+  const arts: OrderPrintAsset[] = [];
+  (custom?.stamps ?? []).forEach((stamp, index) => {
+    const src = stampPrintUrl({
+      artworkDataUrl: stamp.artworkDataUrl ?? "",
+      printFileUrl: stamp.printFileUrl,
+    });
+    if (!isShownImage(src)) return;
+    const name = stampPrintName(
+      {
+        printFileName: stamp.printFileName,
         printFileUrl: stamp.printFileUrl,
-      });
-      const name = stampPrintName(
-        {
-          printFileName: stamp.printFileName,
-          printFileUrl: stamp.printFileUrl,
-          artworkDataUrl: stamp.artworkDataUrl ?? "",
-          side: stamp.side,
-        },
-        index,
-      );
-      return {
-        key: `${item.id}-art-${index}`,
-        src,
-        preview: stamp.artworkDataUrl || src,
-        name,
+        artworkDataUrl: stamp.artworkDataUrl ?? "",
         side: stamp.side,
-        widthPx: stamp.widthPx,
-        heightPx: stamp.heightPx,
-        downloadHref: isShownImage(src) ? adminPrintDownloadHref(src, name) : "",
-      };
-    })
-    .filter((art) => isShownImage(art.src));
+      },
+      index,
+    );
+    arts.push({
+      key: `${item.id}-art-${index}`,
+      src,
+      preview: stamp.artworkDataUrl || src,
+      name,
+      side: stamp.side,
+      widthPx: stamp.widthPx,
+      heightPx: stamp.heightPx,
+      downloadHref: adminPrintDownloadHref(src, name),
+    });
+  });
 
   if (!arts.length && isShownImage(custom?.artworkDataUrl)) {
     const src = custom.artworkDataUrl;

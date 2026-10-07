@@ -388,7 +388,7 @@ function mapOrderRow(row: OrderRow, statusOverride?: OrderStatus): AdminOrder {
 
 export async function listOrders(): Promise<AdminOrder[]> {
   const store = await readStore();
-  const supabase = createServiceSupabase() ?? (await createServerSupabase());
+  const supabase = createServiceSupabase();
 
   if (supabase) {
     const { data, error } = await supabase

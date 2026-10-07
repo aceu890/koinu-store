@@ -177,15 +177,7 @@ export function CustomizeWizard() {
     const targetPosition = position;
     const files = Array.from(fileList).slice(0, 6);
     const loaded = (await Promise.all(files.map(readImage))).filter(
-      (
-        item,
-      ): item is {
-        url: string;
-        width: number;
-        height: number;
-        printFileUrl?: string;
-        printFileName?: string;
-      } => Boolean(item),
+      (item): item is NonNullable<typeof item> => item !== null,
     );
     if (!loaded.length) return;
 

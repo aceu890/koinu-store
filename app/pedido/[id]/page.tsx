@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CircleCheck } from "lucide-react";
 import { WebpayTrustBlock } from "@/components/webpay-marks";
 import { formatPrice, paymentLabel } from "@/lib/format";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServiceSupabase } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Pedido confirmado",
@@ -17,7 +17,7 @@ type Props = {
 export default async function OrderPage({ params, searchParams }: Props) {
   const { id } = await params;
   const query = await searchParams;
-  const supabase = await createServerSupabase();
+  const supabase = createServiceSupabase();
 
   let total = Number(query.total ?? 0);
   let status = "pending";

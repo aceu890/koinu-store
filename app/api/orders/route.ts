@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildLocalOrder, saveLocalOrder } from "@/lib/admin-data";
 import { persistCustomDetails } from "@/lib/order-media";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServiceSupabase } from "@/lib/supabase/admin";
 import type { CartItem, CheckoutPayload } from "@/lib/types";
 
 function isItem(value: unknown): value is CartItem {
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const supabase = await createServerSupabase();
+  const supabase = createServiceSupabase();
 
   async function withSavedArt(orderId: string): Promise<CartItem[]> {
     return Promise.all(
@@ -120,6 +120,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
-  await saveLocalOrder(buildLocalOrder({ ...body, items: savedItems }, order.id, total));
+  try {
+    await saveLocalOrder(buildLocalOrder({ ...body, items: savedItems }, order.id, total));
+  } catch {
+    // En Vercel el disco no persiste; el pedido ya está en Supabase.
+  }
   return NextResponse.json({ id: order.id, total });
 }
