@@ -22,6 +22,7 @@ import {
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { BackToTop } from "@/components/back-to-top";
+import { PwaRegister } from "@/components/pwa-register";
 import { CartHydration, Toaster } from "@/components/toaster";
 import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
@@ -144,6 +145,24 @@ export const metadata: Metadata = {
   },
   description:
     "Ecommerce de sublimación y estampados. Personaliza camisetas, polerones, tazas y más, o elige diseños de la galería.",
+  applicationName: "Koinu Store",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Koinu Store",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
+};
+
+export const viewport = {
+  themeColor: "#ff3d7f",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -159,6 +178,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Script>
         <ThemeProvider>
           <CartHydration />
+          <PwaRegister />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
