@@ -7,7 +7,7 @@ export default function NewProductPage() {
       <Link href="/admin/productos" className="text-sm text-ink/50 hover:text-ink">
         ← Productos
       </Link>
-      <h1 className="mt-3 font-display text-3xl font-bold">Subir producto</h1>
+      <h1 className="mt-3 font-display text-2xl font-bold sm:text-3xl">Subir producto</h1>
       <p className="mt-2 text-sm text-ink/60">
         Modo básico: foto, nombre, precio y tipo. Si hace falta más, pasá a Avanzado.
       </p>

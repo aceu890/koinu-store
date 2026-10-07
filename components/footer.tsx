@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { Mascot } from "@/components/mascot";
+import { whatsappHref } from "@/lib/whatsapp";
 
 export function Footer() {
   const pathname = usePathname();
@@ -71,6 +72,14 @@ export function Footer() {
             </a>
           )}
           <div className="flex flex-col items-end gap-0.5 sm:items-start sm:gap-1">
+            <a
+              href={whatsappHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-magenta"
+            >
+              WhatsApp
+            </a>
             <Link href="/personalizar" className="hover:text-magenta">
               Personalizar
             </Link>

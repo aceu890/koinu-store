@@ -1,19 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { STICKER_DRAG_TYPE, STICKER_PACKS, type LibrarySticker } from "@/lib/sticker-library";
+import { useRef, useState } from "react";
+import { STICKER_PACKS, type LibrarySticker } from "@/lib/sticker-library";
 
 export function StickerPicker({
   onPick,
+  onDrag,
+  onDropAt,
   disabled,
 }: {
   onPick: (sticker: LibrarySticker) => void;
+  onDrag?: (state: { sticker: LibrarySticker; x: number; y: number } | null) => void;
+  onDropAt?: (sticker: LibrarySticker, x: number, y: number) => boolean;
   disabled?: boolean;
 }) {
   const [packId, setPackId] = useState(STICKER_PACKS[0]?.id ?? "anime");
   const pack = STICKER_PACKS.find((item) => item.id === packId) ?? STICKER_PACKS[0];
+  const dragRef = useRef<{
+    sticker: LibrarySticker;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
 
   if (!pack) return null;
+
+  function endPointer(event: React.PointerEvent, sticker: LibrarySticker) {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    onDrag?.(null);
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // already released
+    }
+    if (!drag) return;
+    if (drag.moved) {
+      onDropAt?.(sticker, event.clientX, event.clientY);
+      return;
+    }
+    onPick(sticker);
+  }
 
   return (
     <div>
@@ -31,21 +58,36 @@ export function StickerPicker({
           </button>
         ))}
       </div>
-      <p className="mt-1.5 text-[11px] text-ink/45">Toca para agregar o arrastra a la vista previa.</p>
+      <p className="mt-1.5 text-[11px] text-ink/45">
+        Toca para agregar, o arrastra el sticker hasta la prenda.
+      </p>
       <ul className="mt-2 grid max-h-56 grid-cols-4 gap-1.5 overflow-y-auto rounded-2xl border border-ink/10 bg-surface p-2 sm:max-h-72 sm:grid-cols-5">
         {pack.stickers.map((sticker) => (
           <li key={sticker.id}>
             <button
               type="button"
               disabled={disabled}
-              draggable={!disabled}
-              onClick={() => onPick(sticker)}
-              onDragStart={(event) => {
-                event.dataTransfer.setData(STICKER_DRAG_TYPE, JSON.stringify(sticker));
-                event.dataTransfer.setData("text/plain", sticker.id);
-                event.dataTransfer.effectAllowed = "copy";
+              onPointerDown={(event) => {
+                if (disabled || event.button) return;
+                dragRef.current = {
+                  sticker,
+                  startX: event.clientX,
+                  startY: event.clientY,
+                  moved: false,
+                };
+                event.currentTarget.setPointerCapture(event.pointerId);
               }}
-              className="flex aspect-square w-full cursor-grab items-center justify-center overflow-hidden rounded-xl border border-ink/10 bg-paper p-1 transition hover:border-magenta active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
+              onPointerMove={(event) => {
+                const drag = dragRef.current;
+                if (!drag || drag.sticker.id !== sticker.id) return;
+                const dist = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+                if (!drag.moved && dist < 8) return;
+                drag.moved = true;
+                onDrag?.({ sticker, x: event.clientX, y: event.clientY });
+              }}
+              onPointerUp={(event) => endPointer(event, sticker)}
+              onPointerCancel={(event) => endPointer(event, sticker)}
+              className="flex aspect-square w-full cursor-grab items-center justify-center overflow-hidden rounded-xl border border-ink/10 bg-paper p-1 transition hover:border-magenta active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50 touch-none"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

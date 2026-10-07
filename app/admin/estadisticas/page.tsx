@@ -9,7 +9,7 @@ export default async function AdminStatsPage() {
   return (
     <div>
       <p className="text-xs uppercase tracking-[0.22em] text-ink/45">Negocio</p>
-      <h1 className="mt-1 font-display text-3xl font-bold">Estadísticas</h1>
+      <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Estadísticas</h1>
       <p className="mt-2 max-w-xl text-sm text-ink/60">
         Lo principal para ver cómo viene el taller: ventas del mes, ritmo semanal y qué se pide más.
       </p>

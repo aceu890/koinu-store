@@ -55,11 +55,11 @@ export function BusinessStatsView({ stats }: { stats: BusinessStats }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {cards.map((card) => (
           <div key={card.label} className="rounded-2xl border border-ink/10 bg-surface p-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-ink/45">{card.label}</p>
-            <p className="mt-2 font-display text-2xl font-bold leading-none">{card.value}</p>
+            <p className="mt-2 font-display text-xl font-bold leading-none sm:text-2xl">{card.value}</p>
             <Delta current={card.current} previous={card.previous} suffix={card.suffix} />
           </div>
         ))}
@@ -67,7 +67,7 @@ export function BusinessStatsView({ stats }: { stats: BusinessStats }) {
 
       <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr]">
         <section className="rounded-2xl border border-ink/10 bg-surface p-4 sm:p-5">
-          <div className="flex items-end justify-between gap-3">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
             <div>
               <h2 className="font-display text-lg font-bold">Ventas por semana</h2>
               <p className="text-xs text-ink/50">Las últimas 8 semanas, sin cancelados.</p>

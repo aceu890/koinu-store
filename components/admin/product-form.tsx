@@ -170,7 +170,7 @@ export function ProductForm({ product }: Props) {
 
   return (
     <form onSubmit={onSubmit}>
-      <div className="mb-5 grid max-w-md grid-cols-2 rounded-full bg-ink/5 p-1">
+      <div className="mb-5 grid w-full max-w-md grid-cols-2 rounded-full bg-ink/5 p-1">
         <button
           type="button"
           onClick={() => setMode("basic")}
@@ -245,7 +245,7 @@ export function ProductForm({ product }: Props) {
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4 rounded-3xl border border-ink/10 bg-surface p-6">
+          <div className="space-y-4 rounded-2xl border border-ink/10 bg-surface p-4 sm:rounded-3xl sm:p-6">
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-wider text-ink/50">Nombre</span>
               <input
@@ -357,7 +357,7 @@ export function ProductForm({ product }: Props) {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-3xl border border-ink/10 bg-surface p-6">
+            <div className="rounded-2xl border border-ink/10 bg-surface p-4 sm:rounded-3xl sm:p-6">
               {photoField}
               <label className="mt-4 block">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink/50">
@@ -371,7 +371,7 @@ export function ProductForm({ product }: Props) {
               </label>
             </div>
 
-            <div className="rounded-3xl border border-ink/10 bg-surface p-6">
+            <div className="rounded-2xl border border-ink/10 bg-surface p-4 sm:rounded-3xl sm:p-6">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

@@ -23,7 +23,9 @@ import {
   formatCm,
   getGarmentMeasures,
   getPrintableArea,
+  heightFromWidth,
   placementToCm,
+  widthFromHeight,
 } from "@/lib/measurements";
 import type { PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind } from "@/lib/types";
 import { PRINT_SIDES, TEXT_LAYER_ID } from "@/lib/types";
@@ -42,6 +44,11 @@ export function CustomizeWizard() {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
 
+  const [stickerGhost, setStickerGhost] = useState<{
+    sticker: LibrarySticker;
+    x: number;
+    y: number;
+  } | null>(null);
   const [step, setStep] = useState(0);
   const [kind, setKind] = useState<ProductKind>("shirt");
   const [colorIndex, setColorIndex] = useState(0);
@@ -186,23 +193,28 @@ export function CustomizeWizard() {
 
   function addLibrarySticker(
     sticker: LibrarySticker,
-    dropPct?: { x: number; y: number },
+    _dropPct?: { x: number; y: number },
   ) {
     const aspect = sticker.width / sticker.height;
-    const onSide = stamps.filter((stamp) => stamp.side === view).length;
-    let placement = makePlacement(aspect, kind, view, position, onSide);
-    if (dropPct) {
-      placement = clampPlacement(
-        {
-          ...placement,
-          x: dropPct.x - placement.width / 2,
-          y: dropPct.y - placement.height / 2,
-        },
-        getPrintableArea(kind, view),
-        aspect,
-        containerAspect(kind, view),
-      );
+    const area = getPrintableArea(kind, view);
+    const stage = containerAspect(kind, view);
+    let width = area.width * 0.5;
+    let height = heightFromWidth(width, aspect, stage);
+    if (height > area.height * 0.5) {
+      height = area.height * 0.5;
+      width = widthFromHeight(height, aspect, stage);
     }
+    const placement = clampPlacement(
+      {
+        x: area.left + (area.width - width) / 2,
+        y: area.top + (area.height - height) / 2,
+        width,
+        height,
+      },
+      area,
+      aspect,
+      stage,
+    );
     addArtwork(
       [
         {
@@ -218,6 +230,27 @@ export function CustomizeWizard() {
       position,
       placement,
     );
+  }
+
+  function dropStickerOnPreview(sticker: LibrarySticker, clientX: number, clientY: number) {
+    const stage = document.getElementById("koinu-print-stage");
+    if (!stage) return false;
+    const box = stage.getBoundingClientRect();
+    if (
+      clientX < box.left ||
+      clientX > box.right ||
+      clientY < box.top ||
+      clientY > box.bottom ||
+      !box.width ||
+      !box.height
+    ) {
+      return false;
+    }
+    addLibrarySticker(sticker, {
+      x: ((clientX - box.left) / box.width) * 100,
+      y: ((clientY - box.top) / box.height) * 100,
+    });
+    return true;
   }
 
   function addArtwork(
@@ -621,6 +654,8 @@ export function CustomizeWizard() {
             <div className="mt-4">
               <StickerPicker
                 onPick={addLibrarySticker}
+                onDrag={setStickerGhost}
+                onDropAt={dropStickerOnPreview}
                 disabled={sideStamps.length >= 6}
               />
             </div>
@@ -850,7 +885,7 @@ export function CustomizeWizard() {
       </div>
 
       {step > 0 ? (
-        <div className="order-first sticky top-14 z-20 max-h-[calc(100dvh-9rem)] overflow-y-auto rounded-2xl bg-[linear-gradient(180deg,#1a1410,#2a211c)] p-3 text-on-panel shadow-lg sm:p-5 lg:order-none lg:top-24 lg:max-h-none lg:overflow-visible lg:rounded-[2rem] lg:p-5 lg:shadow-none">
+        <div className="order-first rounded-2xl bg-[linear-gradient(180deg,#1a1410,#2a211c)] p-3 text-on-panel shadow-lg sm:p-5 lg:order-none lg:rounded-[2rem] lg:p-5 lg:shadow-none">
           <p className="hidden text-xs uppercase tracking-[0.25em] text-amber sm:block">Vista previa</p>
           <h3 className="hidden font-display text-2xl font-bold sm:mt-1 sm:block">{base.name} a tu medida</h3>
           <p className="mt-1 hidden text-sm text-amber sm:block">
@@ -880,6 +915,7 @@ export function CustomizeWizard() {
               textSides={PRINT_SIDES.filter((side) => Boolean(textPlacements[side]))}
               onTextPlacement={updateTextPlacement}
               onStickerDrop={addLibrarySticker}
+              highlightDrop={Boolean(stickerGhost)}
               stageClassName="mx-auto max-w-[18rem] sm:max-w-[22rem] lg:max-w-none"
             />
           </div>
@@ -892,6 +928,16 @@ export function CustomizeWizard() {
         </div>
       ) : null}
       </div>
+
+      {stickerGhost ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={stickerGhost.sticker.thumb}
+          alt=""
+          className="pointer-events-none fixed z-[80] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/70 bg-paper object-contain p-1 shadow-xl"
+          style={{ left: stickerGhost.x, top: stickerGhost.y }}
+        />
+      ) : null}
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-ink/10 bg-paper px-3 py-3 shadow-[0_-8px_24px_rgba(22,18,15,0.08)] lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex max-w-6xl gap-2">

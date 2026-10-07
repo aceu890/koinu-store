@@ -21,6 +21,7 @@ import { getFeaturedProducts } from "@/lib/products";
 import { formatPrice } from "@/lib/format";
 import { pastelFill } from "@/lib/pastels";
 import { InstagramStrip } from "@/components/instagram-strip";
+import { WhatsAppCta } from "@/components/whatsapp-cta";
 import type { ProductKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -33,27 +34,6 @@ const BASE_ICONS: Record<ProductKind, typeof Shirt> = {
   cap: HardHat,
   print3d: Box,
 };
-
-const FLOW_STEPS = [
-  {
-    n: "01",
-    t: "Elige",
-    d: "Prenda, taza o accesorio.",
-    mascot: "vamos-mascot",
-  },
-  {
-    n: "02",
-    t: "Personaliza",
-    d: "Texto, imagen y posición.",
-    mascot: "sending",
-  },
-  {
-    n: "03",
-    t: "Recibe",
-    d: "Producción y envío a tu puerta.",
-    mascot: "shipping",
-  },
-] as const;
 
 export default async function HomePage() {
   const featured = await getFeaturedProducts();
@@ -124,40 +104,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-3 py-7 sm:px-6 sm:py-10">
-        <div className="overflow-hidden rounded-2xl border border-ink/10 bg-surface sm:rounded-[2rem]">
-          <div className="grid grid-cols-3">
-            {FLOW_STEPS.map((step, index) => (
-              <Link
-                key={step.n}
-                href="/personalizar"
-                className={`group relative flex flex-col items-center px-2 py-5 text-center transition duration-200 hover:bg-magenta/[0.06] sm:px-6 sm:py-8 ${
-                  index > 0 ? "border-l border-ink/10" : ""
-                }`}
-              >
-                {index < FLOW_STEPS.length - 1 ? (
-                  <span className="pointer-events-none absolute -right-3 top-[38%] z-10 hidden h-6 w-6 place-items-center rounded-full bg-surface text-magenta shadow-sm ring-1 ring-ink/10 sm:grid">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                ) : null}
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-magenta text-[10px] font-bold text-white sm:h-7 sm:w-7 sm:text-[11px]">
-                  {step.n.replace(/^0/, "")}
-                </span>
-                <div className="relative mt-3 w-16 sm:mt-5 sm:w-32">
-                  <div className="mascot-flow relative z-10 transition duration-300 group-hover:-translate-y-1 group-hover:scale-105">
-                    <Mascot name={step.mascot} alt="" size={220} />
-                  </div>
-                  <span className="pointer-events-none absolute bottom-[8%] left-1/2 h-2.5 w-[68%] -translate-x-1/2 rounded-[100%] bg-[rgba(22,18,15,0.28)] blur-[7px] transition duration-300 group-hover:w-[54%] group-hover:opacity-60 sm:h-4 sm:blur-[10px]" />
-                </div>
-                <p className="mt-3 font-display text-sm font-bold sm:mt-4 sm:text-2xl">{step.t}</p>
-                <p className="mt-1 max-w-[14rem] text-[10px] leading-snug text-ink/50 sm:mt-1.5 sm:text-sm">
-                  {step.d}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <div className="pt-2 sm:pt-4">
+        <WhatsAppCta />
+      </div>
 
       <section className="mx-auto max-w-6xl px-3 py-8 sm:px-6 sm:py-12">
         <div className="flex items-center justify-between gap-3">

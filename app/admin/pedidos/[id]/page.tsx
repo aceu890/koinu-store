@@ -26,7 +26,7 @@ export default async function AdminOrderPage({ params }: Props) {
       </Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold">{order.customerName}</h1>
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">{order.customerName}</h1>
           <p className="mt-1 font-mono text-xs text-ink/45">{order.id}</p>
         </div>
         <StatusPill status={order.status} />
@@ -36,7 +36,7 @@ export default async function AdminOrderPage({ params }: Props) {
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-3xl border border-ink/10 bg-surface p-5">
+        <div className="rounded-2xl border border-ink/10 bg-surface p-4 sm:rounded-3xl sm:p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-ink/45">Cliente</p>
           <p className="mt-2 text-sm">{order.email}</p>
           {order.phone ? <p className="text-sm">{order.phone}</p> : null}
@@ -46,7 +46,7 @@ export default async function AdminOrderPage({ params }: Props) {
           </p>
           {order.notes ? <p className="mt-3 text-sm text-ink/70">{order.notes}</p> : null}
         </div>
-        <div className="rounded-3xl border border-ink/10 bg-surface p-5">
+        <div className="rounded-2xl border border-ink/10 bg-surface p-4 sm:rounded-3xl sm:p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-ink/45">Pedido</p>
           <p className="mt-2 text-sm">{new Date(order.createdAt).toLocaleString("es-CL")}</p>
           <p className="text-sm">Pago: {paymentLabel(order.paymentMethod)}</p>
@@ -65,7 +65,7 @@ export default async function AdminOrderPage({ params }: Props) {
           const arts = printAssetsFromItem(item);
           const previews = previewAssetsFromItem(item);
           return (
-            <li key={item.id} className="rounded-3xl border border-ink/10 bg-surface p-5">
+            <li key={item.id} className="rounded-2xl border border-ink/10 bg-surface p-4 sm:rounded-3xl sm:p-5">
               <div className="flex justify-between gap-3">
                 <div>
                   <p className="font-semibold">{item.productName}</p>

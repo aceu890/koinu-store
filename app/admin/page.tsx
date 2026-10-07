@@ -23,7 +23,7 @@ export default async function AdminHomePage() {
   return (
     <div>
       <p className="text-xs uppercase tracking-[0.22em] text-ink/45">Taller</p>
-      <h1 className="mt-1 font-display text-3xl font-bold">Resumen</h1>
+      <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Resumen</h1>
       {isDefaultAdminPassword() ? (
         <p className="mt-3 rounded-2xl border border-amber/40 bg-amber/15 px-4 py-3 text-sm">
           Estás usando la contraseña local por defecto. Definí{" "}
@@ -47,37 +47,37 @@ export default async function AdminHomePage() {
         </p>
       )}
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="rounded-3xl border border-ink/10 bg-surface p-5">
+            <div key={card.label} className="rounded-2xl border border-ink/10 bg-surface p-3.5 sm:rounded-3xl sm:p-5">
               <div className="flex items-center justify-between text-ink/45">
-                <p className="text-xs font-bold uppercase tracking-wider">{card.label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider sm:text-xs">{card.label}</p>
                 <Icon className="h-4 w-4" />
               </div>
-              <p className="mt-3 font-display text-2xl font-bold">{card.value}</p>
+              <p className="mt-2 font-display text-xl font-bold sm:mt-3 sm:text-2xl">{card.value}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
+      <div className="mt-6 grid grid-cols-1 gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
         <Link
           href="/admin/estadisticas"
-          className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper"
+          className="grid h-11 place-items-center rounded-full bg-ink px-5 text-sm font-semibold text-paper sm:h-auto sm:py-2.5"
         >
           Ver estadísticas
         </Link>
         <Link
           href="/admin/pedidos"
-          className="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold"
+          className="grid h-11 place-items-center rounded-full border border-ink/15 px-5 text-sm font-semibold sm:h-auto sm:py-2.5"
         >
           Ver pedidos
         </Link>
         <Link
           href="/admin/productos/nuevo"
-          className="rounded-full bg-magenta px-5 py-2.5 text-sm font-semibold text-white"
+          className="grid h-11 place-items-center rounded-full bg-magenta px-5 text-sm font-semibold text-white sm:h-auto sm:py-2.5"
         >
           Subir producto
         </Link>
@@ -94,16 +94,16 @@ export default async function AdminHomePage() {
             <li key={order.id}>
               <Link
                 href={`/admin/pedidos/${order.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-paper/80"
+                className="flex items-center justify-between gap-3 px-3 py-3 hover:bg-paper/80 sm:px-4"
               >
-                <div>
-                  <p className="font-semibold">{order.customerName}</p>
-                  <p className="text-xs text-ink/45">
-                    {new Date(order.createdAt).toLocaleString("es-CL")} · {order.items.length}{" "}
-                    {order.items.length === 1 ? "ítem" : "ítems"} · Ver detalle
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{order.customerName}</p>
+                  <p className="mt-0.5 truncate text-xs text-ink/45">
+                    {new Date(order.createdAt).toLocaleDateString("es-CL")} · {order.items.length}{" "}
+                    {order.items.length === 1 ? "ítem" : "ítems"}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
                   <StatusPill status={order.status} />
                   <p className="font-display font-bold">{formatPrice(order.total)}</p>
                 </div>

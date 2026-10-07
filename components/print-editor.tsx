@@ -54,6 +54,7 @@ type PrintEditorProps = {
   textSides?: PrintSide[];
   onTextPlacement?: (placement: PrintPlacement) => void;
   onStickerDrop?: (sticker: LibrarySticker, point: { x: number; y: number }) => void;
+  highlightDrop?: boolean;
   stageClassName?: string;
 };
 
@@ -78,6 +79,7 @@ export function PrintEditor({
   textSides = [],
   onTextPlacement,
   onStickerDrop,
+  highlightDrop = false,
   stageClassName,
 }: PrintEditorProps) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -352,7 +354,7 @@ export function PrintEditor({
       ) : null}
       <div
         className={`relative overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_50%_28%,rgba(255,236,210,0.16),transparent_46%),linear-gradient(180deg,#3a322c_0%,#1c1815_58%,#12100e_100%)] select-none sm:rounded-[1.7rem] ${
-          dropActive ? "ring-2 ring-magenta ring-offset-2 ring-offset-[#1c1815]" : ""
+          dropActive || highlightDrop ? "ring-2 ring-magenta ring-offset-2 ring-offset-[#1c1815]" : ""
         }`}
         onPointerDown={deselect}
         onDragOver={onStickerDragOver}
@@ -369,6 +371,7 @@ export function PrintEditor({
             <div className="absolute inset-0 flex items-center justify-center">
               <div
                 ref={stageRef}
+                id="koinu-print-stage"
                 className="relative"
                 style={stageStyle}
                 onPointerMove={onPointerMove}

@@ -8,14 +8,14 @@ export default async function AdminProductsPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-ink/45">Catálogo</p>
-          <h1 className="mt-1 font-display text-3xl font-bold">Productos</h1>
+          <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Productos</h1>
         </div>
         <Link
           href="/admin/productos/nuevo"
-          className="rounded-full bg-magenta px-5 py-2.5 text-sm font-semibold text-white"
+          className="grid h-11 w-full place-items-center rounded-full bg-magenta px-5 text-sm font-semibold text-white sm:h-auto sm:w-auto sm:py-2.5"
         >
           Subir producto
         </Link>

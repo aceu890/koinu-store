@@ -42,7 +42,7 @@ export function OrdersTable({ orders }: { orders: AdminOrder[] }) {
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value as "all" | OrderStatus)}
-          className="rounded-full border border-ink/10 bg-surface px-4 py-2.5 text-sm"
+          className="w-full rounded-full border border-ink/10 bg-surface px-4 py-2.5 text-sm sm:w-auto"
         >
           <option value="all">Todos los estados</option>
           {ORDER_STATUSES.map((value) => (
