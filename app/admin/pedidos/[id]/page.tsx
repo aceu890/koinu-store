@@ -3,6 +3,7 @@ import { ChevronLeft, Download } from "lucide-react";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { StatusPill } from "@/components/admin/orders-table";
 import { getOrder } from "@/lib/admin-data";
+import { isDemoOrderNotes } from "@/lib/demo-orders";
 import {
   customFromItem,
   previewAssetsFromItem,
@@ -29,7 +30,14 @@ export default async function AdminOrderPage({ params }: Props) {
           <h1 className="font-display text-2xl font-bold sm:text-3xl">{order.customerName}</h1>
           <p className="mt-1 font-mono text-xs text-ink/45">{order.id}</p>
         </div>
-        <StatusPill status={order.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill status={order.status} />
+          {isDemoOrderNotes(order.notes) ? (
+            <span className="rounded-full bg-ink/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-ink/50">
+              Pedido de ejemplo
+            </span>
+          ) : null}
+        </div>
       </div>
       <p className="mt-3 text-sm text-ink/60">
         Acá está todo para producir: datos del cliente, archivos para sublimar y la foto de cómo va ubicado el diseño.

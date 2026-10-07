@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Package, ShoppingBag, Sparkles, Wallet } from "lucide-react";
+import { SimulateOrders } from "@/components/admin/simulate-orders";
 import { StatusPill } from "@/components/admin/orders-table";
 import { getDashboardStats } from "@/lib/admin-data";
 import { isDefaultAdminPassword } from "@/lib/admin-auth";
@@ -47,6 +48,8 @@ export default async function AdminHomePage() {
         </p>
       )}
 
+      <SimulateOrders />
+
       <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
@@ -86,7 +89,8 @@ export default async function AdminHomePage() {
       <h2 className="mt-10 font-display text-xl font-bold">Últimos pedidos</h2>
       {!stats.recentOrders.length ? (
         <p className="mt-3 text-sm text-ink/55">
-          Todavía no hay pedidos. Cuando alguien compre, aparecen aquí.
+          Todavía no hay pedidos. Simulá unos de ejemplo arriba, o hacé una compra de prueba por
+          transferencia.
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-ink/10 overflow-hidden rounded-3xl border border-ink/10 bg-surface">

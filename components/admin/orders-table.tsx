@@ -8,6 +8,7 @@ import {
   orderPrintAssets,
   type OrderPrintAsset,
 } from "@/lib/admin-order-media";
+import { isDemoOrderNotes } from "@/lib/demo-orders";
 import { formatPrice, orderStatusLabel, paymentLabel, sideLabel } from "@/lib/format";
 import type { AdminOrder, OrderStatus } from "@/lib/types";
 import { ORDER_STATUSES } from "@/lib/types";
@@ -84,6 +85,11 @@ function OrderCard({ order }: { order: AdminOrder }) {
             <span className="shrink-0">
               <StatusPill status={order.status} />
             </span>
+            {isDemoOrderNotes(order.notes) ? (
+              <span className="shrink-0 rounded-full bg-ink/8 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink/50">
+                Demo
+              </span>
+            ) : null}
           </div>
           <p className="mt-0.5 truncate text-xs text-ink/50">
             {order.email}

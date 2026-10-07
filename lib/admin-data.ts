@@ -15,6 +15,7 @@ import type {
   ProductKind,
 } from "@/lib/types";
 import { ORDER_STATUSES } from "@/lib/types";
+import { DEMO_NOTE_PREFIX, demoOrderTemplates, isDemoOrderNotes } from "@/lib/demo-orders";
 
 type LocalStore = {
   products: Product[];
@@ -443,6 +444,100 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   const order = await getOrder(id);
   if (!order) throw new Error("Pedido no encontrado");
   return { ...order, status };
+}
+
+export async function seedDemoOrders() {
+  const templates = demoOrderTemplates();
+  const service = createServiceSupabase();
+  let created = 0;
+
+  for (const template of templates) {
+    const total = template.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const createdAt = new Date(Date.now() - template.daysAgo * 86_400_000 - 3 * 3_600_000).toISOString();
+    const notes = `${DEMO_NOTE_PREFIX} ${template.note}`;
+
+    if (service) {
+      const { data: order, error } = await service
+        .from("orders")
+        .insert({
+          customer_name: template.customerName,
+          email: template.email,
+          phone: template.phone,
+          address: template.address,
+          city: template.city,
+          notes,
+          payment_method: template.paymentMethod,
+          status: template.status,
+          total,
+          created_at: createdAt,
+        })
+        .select("id")
+        .single();
+      if (error || !order) throw new Error(error?.message ?? "No se pudo crear el pedido de ejemplo");
+
+      const { error: itemsError } = await service.from("order_items").insert(
+        template.items.map((item) => ({
+          order_id: order.id,
+          kind: item.kind,
+          product_name: item.productName,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          details: item.details,
+        })),
+      );
+      if (itemsError) throw new Error(itemsError.message);
+      created += 1;
+      continue;
+    }
+
+    await saveLocalOrder({
+      id: crypto.randomUUID(),
+      customerName: template.customerName,
+      email: template.email,
+      phone: template.phone,
+      address: template.address,
+      city: template.city,
+      notes,
+      paymentMethod: template.paymentMethod,
+      status: template.status,
+      total,
+      createdAt,
+      items: template.items.map((item) => ({
+        ...item,
+        id: crypto.randomUUID(),
+      })),
+    });
+    created += 1;
+  }
+
+  return { created };
+}
+
+export async function deleteDemoOrders() {
+  const service = createServiceSupabase();
+  let removed = 0;
+
+  if (service) {
+    const { data, error } = await service.from("orders").select("id, notes");
+    if (error) throw new Error(error.message);
+    const ids = (data ?? [])
+      .filter((row) => isDemoOrderNotes(row.notes as string | null))
+      .map((row) => row.id as string);
+    if (!ids.length) return { removed: 0 };
+    const { error: deleteError } = await service.from("orders").delete().in("id", ids);
+    if (deleteError) throw new Error(deleteError.message);
+    return { removed: ids.length };
+  }
+
+  const store = await readStore();
+  const next = store.orders.filter((order) => !isDemoOrderNotes(order.notes));
+  removed = store.orders.length - next.length;
+  store.orders = next;
+  for (const key of Object.keys(store.orderStatus)) {
+    if (!next.some((order) => order.id === key)) delete store.orderStatus[key];
+  }
+  await writeStore(store);
+  return { removed };
 }
 
 export async function getDashboardStats() {
