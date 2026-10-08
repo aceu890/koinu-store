@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { KoinuLoader } from "@/components/koinu-loader";
 import { ProductMock } from "@/components/product-mock";
 import { WebpayTrustBlock } from "@/components/webpay-marks";
 import { formatPrice, sideLabel } from "@/lib/format";
@@ -54,12 +55,7 @@ export function CartView() {
   const total = useCartTotal();
 
   if (!hydrated) {
-    return (
-      <div className="flex flex-col items-center py-16 text-ink/50">
-        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-        <p className="mt-3 text-sm">Cargando carrito…</p>
-      </div>
-    );
+    return <KoinuLoader page label="Cargando el carrito…" />;
   }
 
   if (!items.length) {

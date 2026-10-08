@@ -24,28 +24,30 @@ export default async function AdminProductsPage() {
       {!products.length ? (
         <p className="mt-8 text-sm text-ink/55">Todavía no hay productos.</p>
       ) : (
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
           {products.map((product) => (
             <li key={product.id}>
               <Link
                 href={`/admin/productos/${product.id}`}
-                className="block overflow-hidden rounded-3xl border border-ink/10 bg-surface hover:border-magenta"
+                className="block overflow-hidden rounded-xl border border-ink/10 bg-surface transition hover:border-magenta sm:rounded-2xl"
               >
-                <div className="flex aspect-[4/3] items-center justify-center bg-mock p-4">
+                <div className="flex aspect-square items-center justify-center bg-mock p-2 sm:p-3">
                   {product.imageUrl ? (
                     <ProductVisual product={product} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="w-[70%]">
+                    <div className="w-[72%]">
                       <ProductVisual product={product} />
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <p className="text-[10px] uppercase tracking-wider text-ink/40">
-                    {kindLabel(product.kind)} · {product.category}
+                <div className="p-2 sm:p-3">
+                  <p className="truncate text-[9px] uppercase tracking-wider text-ink/40 sm:text-[10px]">
+                    {kindLabel(product.kind)}
                   </p>
-                  <h2 className="mt-1 font-display font-bold">{product.name}</h2>
-                  <div className="mt-2 flex items-center justify-between text-sm">
+                  <h2 className="mt-0.5 truncate font-display text-xs font-bold leading-tight sm:text-sm">
+                    {product.name}
+                  </h2>
+                  <div className="mt-1.5 flex items-center justify-between gap-1 text-[11px] sm:text-sm">
                     <span className="font-semibold">{formatPrice(product.price)}</span>
                     <span className={product.inStock === false ? "text-ink/40" : "text-teal"}>
                       {product.inStock === false ? "Oculto" : "Visible"}

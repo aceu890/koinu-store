@@ -3,7 +3,8 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, Loader2, Lock, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
+import { BadgeCheck, Lock, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
+import { KoinuLoader } from "@/components/koinu-loader";
 import { WebpayLogo, WebpayTrustBlock } from "@/components/webpay-marks";
 import { useCartStore, useCartTotal } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
@@ -15,7 +16,6 @@ export function CheckoutForm() {
   const router = useRouter();
   const items = useCartStore((state) => state.items);
   const hydrated = useCartStore((state) => state.hydrated);
-  const clear = useCartStore((state) => state.clear);
   const total = useCartTotal();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -58,13 +58,12 @@ export function CheckoutForm() {
         throw new Error(data.error || "No se pudo crear el pedido");
       }
 
-      clear();
       const qs = new URLSearchParams({
         total: String(total),
         pago: payload.paymentMethod,
         ...(data.offline ? { offline: "1" } : {}),
       });
-      router.push(`/pedido/${data.id}?${qs.toString()}`);
+      router.replace(`/pedido/${data.id}?${qs.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al confirmar");
       setLoading(false);
@@ -72,15 +71,10 @@ export function CheckoutForm() {
   }
 
   if (!hydrated) {
-    return (
-      <div className="flex flex-col items-center py-16 text-ink/50">
-        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-        <p className="mt-3 text-sm">Cargando…</p>
-      </div>
-    );
+    return <KoinuLoader page label="Cargando el checkout…" />;
   }
 
-  if (!items.length) {
+  if (!items.length && !loading) {
     return (
       <div className="rounded-3xl border border-ink/10 bg-surface px-6 py-14 text-center">
         <ShoppingBag className="mx-auto h-8 w-8 text-ink/30" aria-hidden />
@@ -97,7 +91,8 @@ export function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+    <form onSubmit={onSubmit} className="relative grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+      {loading ? <KoinuLoader overlay label="Creando tu pedido…" /> : null}
       <div className="space-y-6">
         <section className="rounded-3xl border border-ink/10 bg-surface p-6 sm:p-7">
           <h2 className="font-display text-xl font-bold">Datos de envío</h2>
@@ -200,14 +195,7 @@ export function CheckoutForm() {
             disabled={loading}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 font-display font-bold text-white disabled:opacity-60"
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Procesando pedido…
-              </>
-            ) : (
-              "Confirmar pedido"
-            )}
+            {loading ? "Procesando pedido…" : "Confirmar pedido"}
           </button>
           <p className="mt-3 text-center text-xs text-ink/45">
             Al confirmar, el pedido aparece en el taller. El pago con tarjeta se habilita cuando esté Webpay.

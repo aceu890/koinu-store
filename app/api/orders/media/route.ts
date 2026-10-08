@@ -49,8 +49,14 @@ export async function POST(request: Request) {
       );
       if (!remote) {
         return NextResponse.json(
-          { error: "Falta Storage de Supabase para guardar las imágenes" },
-          { status: 500 },
+          {
+            error:
+              process.env.NODE_ENV === "production"
+                ? "No se pudieron guardar las imágenes. Inténtalo de nuevo."
+                : "Falta SUPABASE_SERVICE_ROLE_KEY en el servidor. En Netlify: Site configuration → Environment variables.",
+            code: "NO_STORAGE",
+          },
+          { status: 503 },
         );
       }
       urls[key] = remote;

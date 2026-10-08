@@ -327,7 +327,7 @@ export function buildLocalOrder(payload: CheckoutPayload, id: string, total: num
     city: payload.city?.trim() || null,
     notes: payload.notes?.trim() || null,
     paymentMethod: payload.paymentMethod,
-    status: "pending",
+    status: "paid",
     total,
     createdAt: new Date().toISOString(),
     items: itemsFromCart(payload.items),

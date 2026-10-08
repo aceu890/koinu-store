@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -15,6 +15,36 @@ const links = [
   { href: "/personalizar", label: "Personalizar", pastel: 2 },
   { href: "/galeria", label: "Galería", pastel: 4 },
 ] as const;
+
+function SecretAdminLogo() {
+  const router = useRouter();
+  const taps = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function onTap() {
+    taps.current += 1;
+    if (timer.current) clearTimeout(timer.current);
+    if (taps.current >= 4) {
+      taps.current = 0;
+      router.push("/admin/login");
+      return;
+    }
+    timer.current = setTimeout(() => {
+      taps.current = 0;
+    }, 1600);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      aria-label="Koinu Store"
+      className="grid h-12 w-12 place-items-center overflow-hidden rounded-full"
+    >
+      <BrandLogo size={96} priority />
+    </button>
+  );
+}
 
 function NavLetters({ label }: { label: string }) {
   return (
@@ -42,17 +72,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 sm:h-16 sm:px-6">
-        <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-          <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-full">
-            <BrandLogo size={96} priority />
-          </span>
-          <div className="leading-tight">
+        <div className="flex items-center gap-2">
+          <SecretAdminLogo />
+          <Link href="/" className="leading-tight" onClick={() => setOpen(false)}>
             <p className="font-display text-lg font-bold tracking-tight">Koinu</p>
             <p className="-mt-0.5 text-[10px] uppercase tracking-[0.22em] text-ink/60">
               Store · Print
             </p>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
         <nav className="hidden min-w-0 flex-1 justify-center px-4 md:flex">
           <div className="grid w-full max-w-lg grid-cols-3 gap-1.5">

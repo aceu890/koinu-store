@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
+import { KoinuLoader } from "@/components/koinu-loader";
 
 export function AdminLoginForm({ usingDefault }: { usingDefault: boolean }) {
   const router = useRouter();
@@ -33,6 +34,7 @@ export function AdminLoginForm({ usingDefault }: { usingDefault: boolean }) {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10 sm:py-16">
+      {loading ? <KoinuLoader overlay label="Entrando al taller…" /> : null}
       <div className="rounded-3xl border border-ink/10 bg-surface p-6 shadow-sm sm:rounded-[2rem] sm:p-8">
         <div className="mx-auto grid h-16 w-16 place-items-center overflow-hidden rounded-full">
           <BrandLogo size={128} />

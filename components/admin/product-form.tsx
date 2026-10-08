@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { KoinuLoader } from "@/components/koinu-loader";
 import { CATEGORIES } from "@/lib/catalog";
 import { kindLabel, slugify } from "@/lib/format";
 import type { DesignKey, Product, ProductKind } from "@/lib/types";
@@ -169,7 +170,10 @@ export function ProductForm({ product }: Props) {
   );
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} className="relative">
+      {loading || uploading ? (
+        <KoinuLoader overlay label={uploading ? "Subiendo imagen…" : "Guardando producto…"} />
+      ) : null}
       <div className="mb-5 grid w-full max-w-md grid-cols-2 rounded-full bg-ink/5 p-1">
         <button
           type="button"

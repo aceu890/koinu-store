@@ -341,12 +341,63 @@ html.dark .mascot-flow {
   }
 }
 
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes koinu-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes koinu-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.koinu-loader-ring {
+  border: 2px solid color-mix(in srgb, var(--magenta) 16%, transparent);
+  border-top-color: var(--magenta);
+  animation: koinu-spin 0.95s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.koinu-loader-ring-inner {
+  border: 2px solid color-mix(in srgb, var(--teal) 14%, transparent);
+  border-bottom-color: var(--teal);
+  animation: koinu-spin 1.5s linear infinite reverse;
+}
+
+.koinu-overlay {
+  animation: koinu-overlay-in 0.22s ease both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mascot-welcome,
   .mascot-sparkle,
   .mascot-sparkle-delay,
   .rise-grid > *,
-  .nav-koinu:hover .nav-koinu-letters span {
+  .nav-koinu:hover .nav-koinu-letters span,
+  .page-enter,
+  .koinu-loader-ring,
+  .koinu-loader-ring-inner,
+  .koinu-overlay,
+  .btn-personaliza {
     animation: none;
   }
 

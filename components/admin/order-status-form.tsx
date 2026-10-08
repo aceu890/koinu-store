@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { KoinuLoader } from "@/components/koinu-loader";
 import { orderStatusLabel } from "@/lib/format";
 import type { OrderStatus } from "@/lib/types";
 import { ORDER_STATUSES } from "@/lib/types";
@@ -48,7 +49,11 @@ export function OrderStatusForm({ id, status }: { id: string; status: OrderStatu
           </option>
         ))}
       </select>
-      {saving ? <p className="mt-1 text-xs text-ink/45">Guardando…</p> : null}
+      {saving ? (
+        <div className="mt-2">
+          <KoinuLoader size="sm" label="Guardando estado…" />
+        </div>
+      ) : null}
       {error ? <p className="mt-1 text-xs text-magenta-dark">{error}</p> : null}
     </label>
   );

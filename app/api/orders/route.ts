@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       city: body.city?.trim() || null,
       notes: body.notes?.trim() || null,
       payment_method: body.paymentMethod,
-      status: "pending",
+      status: "paid",
       total,
     })
     .select("id")

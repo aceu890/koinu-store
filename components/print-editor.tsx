@@ -25,7 +25,6 @@ import type { PrintPlacement, PrintPosition, PrintSide, PrintStamp, ProductKind 
 import { TEXT_LAYER_ID } from "@/lib/types";
 import { printFontStyle } from "@/lib/print-fonts";
 import { sideLabel, sideTo } from "@/lib/format";
-import { STICKER_DRAG_TYPE, getLibrarySticker, type LibrarySticker } from "@/lib/sticker-library";
 
 type Handle = "move" | "nw" | "ne" | "sw" | "se" | "rotate";
 
@@ -53,8 +52,6 @@ type PrintEditorProps = {
   textPlacement?: PrintPlacement | null;
   textSides?: PrintSide[];
   onTextPlacement?: (placement: PrintPlacement) => void;
-  onStickerDrop?: (sticker: LibrarySticker, point: { x: number; y: number }) => void;
-  highlightDrop?: boolean;
   stageClassName?: string;
 };
 
@@ -78,8 +75,6 @@ export function PrintEditor({
   textPlacement = null,
   textSides = [],
   onTextPlacement,
-  onStickerDrop,
-  highlightDrop = false,
   stageClassName,
 }: PrintEditorProps) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -94,7 +89,6 @@ export function PrintEditor({
     didDrag: boolean;
   } | null>(null);
   const [stageAspect, setStageAspect] = useState(1);
-  const [dropActive, setDropActive] = useState(false);
   const area = getPrintableArea(kind, view);
   const measures = getGarmentMeasures(kind, size);
   const dark = isDarkHex(color);
@@ -153,47 +147,6 @@ export function PrintEditor({
       x: ((clientX - box.left) / box.width) * 100,
       y: ((clientY - box.top) / box.height) * 100,
     };
-  }
-
-  function isStickerDrag(event: React.DragEvent) {
-    return Array.from(event.dataTransfer.types).some(
-      (type) => type === STICKER_DRAG_TYPE || type === "text/plain",
-    );
-  }
-
-  function parseDroppedSticker(event: React.DragEvent): LibrarySticker | null {
-    const raw = event.dataTransfer.getData(STICKER_DRAG_TYPE);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as LibrarySticker;
-        if (parsed?.id && parsed.src) return parsed;
-      } catch {
-        return null;
-      }
-    }
-    const id = event.dataTransfer.getData("text/plain");
-    return id ? getLibrarySticker(id) : null;
-  }
-
-  function onStickerDragOver(event: React.DragEvent) {
-    if (!onStickerDrop || !isStickerDrag(event)) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
-    setDropActive(true);
-  }
-
-  function onStickerDragLeave(event: React.DragEvent<HTMLDivElement>) {
-    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-    setDropActive(false);
-  }
-
-  function handleStickerDrop(event: React.DragEvent) {
-    if (!onStickerDrop) return;
-    event.preventDefault();
-    setDropActive(false);
-    const sticker = parseDroppedSticker(event);
-    if (!sticker || !stageRef.current) return;
-    onStickerDrop(sticker, clientToPct(event.clientX, event.clientY));
   }
 
   function commitPlacement(id: string, next: PrintPlacement) {
@@ -353,14 +306,8 @@ export function PrintEditor({
         </div>
       ) : null}
       <div
-        className={`relative overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_50%_28%,rgba(255,236,210,0.16),transparent_46%),linear-gradient(180deg,#3a322c_0%,#1c1815_58%,#12100e_100%)] select-none sm:rounded-[1.7rem] ${
-          dropActive || highlightDrop ? "ring-2 ring-magenta ring-offset-2 ring-offset-[#1c1815]" : ""
-        }`}
+        className="relative overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_50%_28%,rgba(255,236,210,0.16),transparent_46%),linear-gradient(180deg,#3a322c_0%,#1c1815_58%,#12100e_100%)] select-none sm:rounded-[1.7rem]"
         onPointerDown={deselect}
-        onDragOver={onStickerDragOver}
-        onDragEnter={onStickerDragOver}
-        onDragLeave={onStickerDragLeave}
-        onDrop={handleStickerDrop}
       >
         <div className="absolute inset-x-[12%] bottom-[6%] h-8 rounded-[100%] bg-black/45 blur-xl" />
         <div className="relative px-2 pb-4 pt-2 sm:px-3 sm:pb-5 sm:pt-2">

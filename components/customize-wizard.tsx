@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Minus, Plus, Sparkles, Trash2, Type, Upload } from "lucide-react";
+import { KoinuLoader } from "@/components/koinu-loader";
 import { ProductMock } from "@/components/product-mock";
 import { PrintEditor } from "@/components/print-editor";
 import { StickerPicker } from "@/components/sticker-picker";
@@ -44,11 +45,6 @@ export function CustomizeWizard() {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
 
-  const [stickerGhost, setStickerGhost] = useState<{
-    sticker: LibrarySticker;
-    x: number;
-    y: number;
-  } | null>(null);
   const [step, setStep] = useState(0);
   const [kind, setKind] = useState<ProductKind>("shirt");
   const [colorIndex, setColorIndex] = useState(0);
@@ -191,10 +187,7 @@ export function CustomizeWizard() {
     addArtwork(loaded, targetView, targetKind, targetPosition);
   }
 
-  function addLibrarySticker(
-    sticker: LibrarySticker,
-    _dropPct?: { x: number; y: number },
-  ) {
+  function addLibrarySticker(sticker: LibrarySticker) {
     const aspect = sticker.width / sticker.height;
     const area = getPrintableArea(kind, view);
     const stage = containerAspect(kind, view);
@@ -230,27 +223,6 @@ export function CustomizeWizard() {
       position,
       placement,
     );
-  }
-
-  function dropStickerOnPreview(sticker: LibrarySticker, clientX: number, clientY: number) {
-    const stage = document.getElementById("koinu-print-stage");
-    if (!stage) return false;
-    const box = stage.getBoundingClientRect();
-    if (
-      clientX < box.left ||
-      clientX > box.right ||
-      clientY < box.top ||
-      clientY > box.bottom ||
-      !box.width ||
-      !box.height
-    ) {
-      return false;
-    }
-    addLibrarySticker(sticker, {
-      x: ((clientX - box.left) / box.width) * 100,
-      y: ((clientY - box.top) / box.height) * 100,
-    });
-    return true;
   }
 
   function addArtwork(
@@ -454,6 +426,7 @@ export function CustomizeWizard() {
 
   return (
     <div>
+      {saving ? <KoinuLoader overlay label="Guardando tu diseño…" /> : null}
       <div className="mb-3 lg:hidden">
         <div className="flex items-center justify-center gap-2">
           {STEPS.map((label, index) => (
@@ -652,12 +625,7 @@ export function CustomizeWizard() {
               />
             </label>
             <div className="mt-4">
-              <StickerPicker
-                onPick={addLibrarySticker}
-                onDrag={setStickerGhost}
-                onDropAt={dropStickerOnPreview}
-                disabled={sideStamps.length >= 6}
-              />
+              <StickerPicker onPick={addLibrarySticker} disabled={sideStamps.length >= 6} />
             </div>
 
             {sideStamps.length ? (
@@ -1008,13 +976,11 @@ export function CustomizeWizard() {
               textPlacement={textPlacements[view] ?? null}
               textSides={PRINT_SIDES.filter((side) => Boolean(textPlacements[side]))}
               onTextPlacement={updateTextPlacement}
-              onStickerDrop={addLibrarySticker}
-              highlightDrop={Boolean(stickerGhost)}
               stageClassName="mx-auto max-w-[18rem] sm:max-w-[22rem] lg:max-w-none"
             />
           </div>
           <p className="mt-4 hidden text-center text-sm text-on-panel/60 lg:block">
-            Arrastra stickers o imágenes, rota o elimina cada una.{" "}
+            Tocá un sticker para sumarlo. En la prenda lo podés mover, rotar o quitar.{" "}
             {productViews.length > 2
               ? "Frente, espalda y perfiles son fotos distintas."
               : "Frente y espalda son fotos distintas."}
@@ -1022,16 +988,6 @@ export function CustomizeWizard() {
         </div>
       ) : null}
       </div>
-
-      {stickerGhost ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={stickerGhost.sticker.thumb}
-          alt=""
-          className="pointer-events-none fixed z-[80] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/70 bg-paper object-contain p-1 shadow-xl"
-          style={{ left: stickerGhost.x, top: stickerGhost.y }}
-        />
-      ) : null}
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-ink/10 bg-paper px-3 py-3 shadow-[0_-8px_24px_rgba(22,18,15,0.08)] lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex max-w-6xl gap-2">

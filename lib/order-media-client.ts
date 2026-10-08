@@ -62,7 +62,14 @@ export async function persistCartMedia(items: CartItem[]): Promise<CartItem[]> {
   if (![...form.keys()].length) return prepared;
 
   const response = await fetch("/api/orders/media", { method: "POST", body: form });
-  const data = (await response.json()) as { urls?: Record<string, string>; error?: string };
+  const data = (await response.json()) as {
+    urls?: Record<string, string>;
+    error?: string;
+    code?: string;
+  };
+  if (data.code === "NO_STORAGE" || response.status === 503) {
+    return prepared;
+  }
   if (!response.ok || !data.urls) {
     throw new Error(data.error || "No se pudieron guardar las imágenes del diseño");
   }

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Download, ImageOff } from "lucide-react";
 import {
-  orderPreviewAssets,
-  orderPrintAssets,
+  previewAssetsFromItem,
+  printAssetsFromItem,
   type OrderPrintAsset,
 } from "@/lib/admin-order-media";
 import { formatPrice, orderStatusLabel, paymentLabel, sideLabel } from "@/lib/format";
@@ -56,7 +56,7 @@ export function OrdersTable({ orders }: { orders: AdminOrder[] }) {
       {!filtered.length ? (
         <p className="mt-8 text-sm text-ink/55">No hay pedidos con ese filtro.</p>
       ) : (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-5 space-y-4">
           {filtered.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
@@ -67,53 +67,72 @@ export function OrdersTable({ orders }: { orders: AdminOrder[] }) {
 }
 
 function OrderCard({ order }: { order: AdminOrder }) {
-  const printFiles = orderPrintAssets(order);
-  const positionShots = orderPreviewAssets(order);
-  const itemNames = order.items.map((item) => item.productName).join(" · ");
-  const customCount = order.items.filter((item) => item.kind === "custom").length;
   const when = new Date(order.createdAt);
+  const pieces = order.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <article className="rounded-2xl border border-ink/10 bg-surface p-3 sm:px-4 sm:py-3">
-      <div className="flex items-center gap-2 sm:gap-3">
+    <article className="overflow-hidden rounded-2xl border border-ink/10 bg-surface sm:rounded-3xl">
+      <div className="flex items-start gap-3 border-b border-ink/8 px-3 py-3 sm:px-5 sm:py-4">
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <p className="min-w-0 truncate font-display text-base font-bold leading-tight sm:text-lg">
               {order.customerName}
             </p>
-            <span className="shrink-0">
-              <StatusPill status={order.status} />
-            </span>
+            <StatusPill status={order.status} />
           </div>
-          <p className="mt-0.5 truncate text-xs text-ink/50">
-            {order.email}
-            {" · "}
-            {itemNames}
-            {" · "}
+          <p className="mt-1 text-xs text-ink/50">
             {when.toLocaleDateString("es-CL")}
-            {customCount ? " · sublimar" : ""}
             {" · "}
             {paymentLabel(order.paymentMethod)}
+            {" · "}
+            {pieces} {pieces === 1 ? "pieza" : "piezas"}
           </p>
+          <p className="mt-0.5 truncate text-xs text-ink/40">{order.email}</p>
         </div>
-        <p className="shrink-0 font-display text-base font-bold sm:text-lg">{formatPrice(order.total)}</p>
-        <Link
-          href={`/admin/pedidos/${order.id}`}
-          className="hidden h-9 shrink-0 items-center justify-center gap-1 rounded-full bg-ink px-3 text-sm font-semibold text-paper sm:inline-flex"
-        >
-          Ver detalle
-          <ChevronRight className="h-4 w-4" />
-        </Link>
+        <div className="shrink-0 text-right">
+          <p className="font-display text-base font-bold sm:text-lg">{formatPrice(order.total)}</p>
+          <Link
+            href={`/admin/pedidos/${order.id}`}
+            className="mt-2 hidden h-9 items-center justify-center gap-1 rounded-full bg-ink px-3 text-sm font-semibold text-paper sm:inline-flex"
+          >
+            Ver detalle
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
-        <AssetStrip title="Estampa" assets={printFiles} empty="Sin archivo" />
-        <AssetStrip title="Posición" assets={positionShots} empty="Sin referencia" dark />
-      </div>
+      <ul className="divide-y divide-ink/8">
+        {order.items.map((item, index) => (
+          <li key={`${order.id}-${item.id}-${index}`} className="px-3 py-3 sm:px-5 sm:py-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-semibold leading-tight">{item.productName}</p>
+                <p className="mt-0.5 text-xs text-ink/45">
+                  {item.kind === "custom" ? "Personalizado" : "Galería"}
+                  {" · "}
+                  {item.quantity}× {formatPrice(item.unitPrice)}
+                </p>
+              </div>
+              <p className="shrink-0 text-sm font-semibold">
+                {formatPrice(item.unitPrice * item.quantity)}
+              </p>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
+              <AssetStrip title="Estampa" assets={printAssetsFromItem(item)} empty="Sin archivo" />
+              <AssetStrip
+                title="Posición"
+                assets={previewAssetsFromItem(item)}
+                empty="Sin referencia"
+                dark
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
 
       <Link
         href={`/admin/pedidos/${order.id}`}
-        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-1 rounded-full bg-ink px-4 text-sm font-semibold text-paper sm:hidden"
+        className="flex h-11 items-center justify-center gap-1 border-t border-ink/8 text-sm font-semibold sm:hidden"
       >
         Ver detalle
         <ChevronRight className="h-4 w-4" />

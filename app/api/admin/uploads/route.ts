@@ -35,7 +35,12 @@ export async function POST(request: Request) {
     const remote = await uploadPublicFile(PRODUCT_IMAGES_BUCKET, name, bytes, file.type);
     if (!remote) {
       return NextResponse.json(
-        { error: "Falta Storage de Supabase para guardar las imágenes" },
+        {
+          error:
+            process.env.NODE_ENV === "production"
+              ? "No se pudo subir la imagen. Inténtalo de nuevo."
+              : "Falta Storage de Supabase para guardar las imágenes",
+        },
         { status: 500 },
       );
     }

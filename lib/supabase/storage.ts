@@ -24,6 +24,11 @@ export function isStoredImageUrl(value: unknown): value is string {
   );
 }
 
+function storageMime(contentType: string) {
+  if (contentType === "image/jpg") return "image/jpeg";
+  return contentType || "image/jpeg";
+}
+
 export async function uploadPublicFile(
   bucket: string,
   objectPath: string,
@@ -33,8 +38,9 @@ export async function uploadPublicFile(
   const supabase = createServiceSupabase();
   if (!supabase) return null;
 
+  const mime = storageMime(contentType);
   const { error } = await supabase.storage.from(bucket).upload(objectPath, bytes, {
-    contentType,
+    contentType: mime,
     upsert: true,
   });
   if (error) {

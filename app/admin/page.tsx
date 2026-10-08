@@ -24,28 +24,33 @@ export default async function AdminHomePage() {
     <div>
       <p className="text-xs uppercase tracking-[0.22em] text-ink/45">Taller</p>
       <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Resumen</h1>
-      {isDefaultAdminPassword() ? (
-        <p className="mt-3 rounded-2xl border border-amber/40 bg-amber/15 px-4 py-3 text-sm">
-          Estás usando la contraseña local por defecto. Definí{" "}
-          <code className="font-semibold">ADMIN_PASSWORD</code> en <code>.env.local</code> antes de
-          publicar.
-        </p>
+      {process.env.NODE_ENV !== "production" ? (
+        <>
+          {isDefaultAdminPassword() ? (
+            <p className="mt-3 rounded-2xl border border-amber/40 bg-amber/15 px-4 py-3 text-sm">
+              Estás usando la contraseña local por defecto. Definí{" "}
+              <code className="font-semibold">ADMIN_PASSWORD</code> en <code>.env.local</code> antes de
+              publicar.
+            </p>
+          ) : null}
+          {!isSupabaseConfigured() ? (
+            <p className="mt-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3 text-sm">
+              Base local: pedidos y productos se guardan en este computador. Cuando pegues las claves de
+              Supabase en <code className="font-semibold">.env.local</code>, todo pasa a la nube.
+            </p>
+          ) : !isSupabaseWriteConfigured() ? (
+            <p className="mt-3 rounded-2xl border border-amber/40 bg-amber/15 px-4 py-3 text-sm">
+              Supabase está leyendo, pero falta{" "}
+              <code className="font-semibold">SUPABASE_SERVICE_ROLE_KEY</code> para guardar
+              productos, fotos y cambiar el estado de los pedidos.
+            </p>
+          ) : (
+            <p className="mt-3 rounded-2xl border border-teal/40 bg-teal/15 px-4 py-3 text-sm">
+              Base: Supabase. Catálogo, pedidos y fotos de sublimación van a la nube.
+            </p>
+          )}
+        </>
       ) : null}
-      {!isSupabaseConfigured() ? (
-        <p className="mt-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3 text-sm">
-          Base local: pedidos y productos se guardan en este computador. Cuando pegues las claves de
-          Supabase en <code className="font-semibold">.env.local</code>, todo pasa a la nube.
-        </p>
-      ) : !isSupabaseWriteConfigured() ? (
-        <p className="mt-3 rounded-2xl border border-amber/40 bg-amber/15 px-4 py-3 text-sm">
-          Supabase está leyendo, pero falta <code className="font-semibold">SUPABASE_SERVICE_ROLE_KEY</code>{" "}
-          para guardar productos, fotos y cambiar el estado de los pedidos.
-        </p>
-      ) : (
-        <p className="mt-3 rounded-2xl border border-teal/40 bg-teal/15 px-4 py-3 text-sm">
-          Base: Supabase. Catálogo, pedidos y fotos de sublimación van a la nube.
-        </p>
-      )}
 
       <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {cards.map((card) => {
@@ -60,27 +65,6 @@ export default async function AdminHomePage() {
             </div>
           );
         })}
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-        <Link
-          href="/admin/estadisticas"
-          className="grid h-11 place-items-center rounded-full bg-ink px-5 text-sm font-semibold text-paper sm:h-auto sm:py-2.5"
-        >
-          Ver estadísticas
-        </Link>
-        <Link
-          href="/admin/pedidos"
-          className="grid h-11 place-items-center rounded-full border border-ink/15 px-5 text-sm font-semibold sm:h-auto sm:py-2.5"
-        >
-          Ver pedidos
-        </Link>
-        <Link
-          href="/admin/productos/nuevo"
-          className="grid h-11 place-items-center rounded-full bg-magenta px-5 text-sm font-semibold text-white sm:h-auto sm:py-2.5"
-        >
-          Subir producto
-        </Link>
       </div>
 
       <h2 className="mt-10 font-display text-xl font-bold">Últimos pedidos</h2>

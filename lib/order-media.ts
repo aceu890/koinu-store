@@ -32,9 +32,7 @@ async function saveBytes(bytes: Buffer, mime: string, orderId: string, name: str
     bytes,
     contentType,
   );
-  if (!remote) {
-    throw new Error("Falta Storage de Supabase para guardar las imágenes");
-  }
+  if (!remote) return null;
   return remote;
 }
 
@@ -51,9 +49,14 @@ async function persistAsset(value: string | null | undefined, orderId: string, n
 }
 
 async function persistStamp(stamp: PrintStamp, orderId: string, name: string): Promise<PrintStamp> {
-  const preview = (await persistAsset(stamp.artworkDataUrl, orderId, `${name}-preview`)) ?? stamp.artworkDataUrl;
+  const preview =
+    (await persistAsset(stamp.artworkDataUrl, orderId, `${name}-preview`)) ??
+    keepUrl(stamp.artworkDataUrl) ??
+    "";
   const printFileUrl =
-    (await persistAsset(stamp.printFileUrl ?? stamp.artworkDataUrl, orderId, `${name}-sublimar`)) ?? preview;
+    (await persistAsset(stamp.printFileUrl ?? stamp.artworkDataUrl, orderId, `${name}-sublimar`)) ??
+    keepUrl(stamp.printFileUrl) ??
+    preview;
   return {
     ...stamp,
     artworkDataUrl: preview,
@@ -79,7 +82,10 @@ export async function persistCustomDetails(
         await Promise.all(
           Object.entries(custom.previewBySide).map(async ([side, url]) => {
             if (!url) return [side, url];
-            return [side, (await persistAsset(url, orderId, `${prefix}-pos-${side}`)) ?? url];
+            return [
+              side,
+              (await persistAsset(url, orderId, `${prefix}-pos-${side}`)) ?? keepUrl(url) ?? "",
+            ];
           }),
         ),
       )
@@ -89,7 +95,7 @@ export async function persistCustomDetails(
     stamps?.[0]?.printFileUrl ??
     stamps?.[0]?.artworkDataUrl ??
     (await persistAsset(custom.artworkDataUrl, orderId, `${prefix}-art`)) ??
-    custom.artworkDataUrl ??
+    keepUrl(custom.artworkDataUrl) ??
     null;
 
   return {
