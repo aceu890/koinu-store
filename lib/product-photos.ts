@@ -12,72 +12,72 @@ export const PRODUCT_PHOTOS: {
 } = {
   shirt: {
     front: {
-      src: "/producto-base/camisa_frontal.png",
+      src: "/producto-base/camisa_frontal.webp",
       width: 512,
       height: 469,
     },
     back: {
-      src: "/producto-base/camisa_espalda.png",
+      src: "/producto-base/camisa_espalda.webp",
       width: 512,
       height: 463,
     },
     left: {
-      src: "/producto-base/perfil_izquierdo.png",
+      src: "/producto-base/perfil_izquierdo.webp",
       width: 512,
       height: 473,
     },
     right: {
-      src: "/producto-base/perfil_derecho.png",
+      src: "/producto-base/perfil_derecho.webp",
       width: 512,
       height: 467,
     },
   },
   hoodie: {
     front: {
-      src: "/producto-base/poleron-frente.png",
+      src: "/producto-base/poleron-frente.webp",
       width: 356,
       height: 422,
     },
     back: {
-      src: "/producto-base/poleron-espalda.png",
+      src: "/producto-base/poleron-espalda.webp",
       width: 346,
       height: 407,
     },
     left: {
-      src: "/producto-base/poleron-perfil-izquierdo.png",
+      src: "/producto-base/poleron-perfil-izquierdo.webp",
       width: 208,
       height: 375,
     },
     right: {
-      src: "/producto-base/poleron-perfil-derecho.png",
+      src: "/producto-base/poleron-perfil-derecho.webp",
       width: 206,
       height: 387,
     },
   },
   mug: {
     front: {
-      src: "/producto-base/taza.png",
+      src: "/producto-base/taza.webp",
       width: 500,
       height: 500,
     },
   },
   tote: {
     front: {
-      src: "/producto-base/bolsa.png",
+      src: "/producto-base/bolsa.webp",
       width: 570,
       height: 570,
     },
   },
   cap: {
     front: {
-      src: "/producto-base/gorra.png",
+      src: "/producto-base/gorra.webp",
       width: 1200,
       height: 1200,
     },
   },
   print3d: {
     front: {
-      src: "/producto-base/3d.png",
+      src: "/producto-base/3d.webp",
       width: 900,
       height: 900,
     },

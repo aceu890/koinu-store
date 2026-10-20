@@ -1,4 +1,4 @@
-import { ProductMock } from "@/components/product-mock";
+import { GarmentThumb } from "@/components/garment-thumb";
 import type { Product } from "@/lib/types";
 
 export function ProductVisual({
@@ -14,12 +14,18 @@ export function ProductVisual({
       <img
         src={product.imageUrl}
         alt={product.name}
+        loading="lazy"
+        decoding="async"
         className={className ?? "h-full w-full object-cover"}
       />
     );
   }
 
   return (
-    <ProductMock kind={product.kind} color={product.colors[0]} design={product.design} />
+    <GarmentThumb
+      kind={product.kind}
+      color={product.colors[0] ?? "#F7F4EF"}
+      className={className}
+    />
   );
 }

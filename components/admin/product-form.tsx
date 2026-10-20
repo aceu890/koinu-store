@@ -29,7 +29,7 @@ const KIND_DEFAULTS: Record<ProductKind, { category: string; sizes: string }> = 
   mug: { category: "tazas", sizes: "" },
   tote: { category: "bolsos", sizes: "" },
   cap: { category: "gorras", sizes: "Única" },
-  print3d: { category: "camisetas", sizes: "" },
+  print3d: { category: "impresion-3d", sizes: "Única" },
 };
 
 type Props = {

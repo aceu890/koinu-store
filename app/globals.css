@@ -85,12 +85,20 @@ a[aria-disabled="true"] {
 }
 
 .noise {
-  background-image: radial-gradient(rgba(22, 18, 15, 0.05) 0.6px, transparent 0.6px);
-  background-size: 4px 4px;
+  background-image: none;
 }
 
-html.dark .noise {
-  background-image: radial-gradient(rgba(243, 236, 227, 0.06) 0.6px, transparent 0.6px);
+@media (min-width: 768px) {
+  .noise {
+    background-image: radial-gradient(rgba(22, 18, 15, 0.05) 0.6px, transparent 0.6px);
+    background-size: 4px 4px;
+  }
+}
+
+@media (min-width: 768px) {
+  html.dark .noise {
+    background-image: radial-gradient(rgba(243, 236, 227, 0.06) 0.6px, transparent 0.6px);
+  }
 }
 
 @keyframes glow-pulse {
@@ -130,8 +138,10 @@ html.dark .noise {
   );
 }
 
-.btn-personaliza {
-  animation: glow-pulse 2.2s ease-in-out infinite;
+@media (min-width: 768px) {
+  .btn-personaliza {
+    animation: glow-pulse 2.2s ease-in-out infinite;
+  }
 }
 
 .btn-pago {
@@ -153,14 +163,23 @@ html.dark .noise {
 }
 
 .halftone {
-  background-image: radial-gradient(#16120f 0.7px, transparent 0.7px);
-  background-size: 7px 7px;
-  opacity: 0.12;
+  display: none;
 }
 
-html.dark .halftone {
-  background-image: radial-gradient(#f3ece3 0.7px, transparent 0.7px);
-  opacity: 0.08;
+@media (min-width: 768px) {
+  .halftone {
+    display: block;
+    background-image: radial-gradient(#16120f 0.7px, transparent 0.7px);
+    background-size: 7px 7px;
+    opacity: 0.12;
+  }
+}
+
+@media (min-width: 768px) {
+  html.dark .halftone {
+    background-image: radial-gradient(#f3ece3 0.7px, transparent 0.7px);
+    opacity: 0.08;
+  }
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]),

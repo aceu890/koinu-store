@@ -4,11 +4,14 @@ export type SocialNetwork = {
   href: string;
 };
 
+export const INSTAGRAM_URL = "https://www.instagram.com/koinustore_dtf/";
+export const INSTAGRAM_HANDLE = "koinustore_dtf";
+
 export const SOCIALS: SocialNetwork[] = [
   {
     id: "instagram",
     label: "Instagram",
-    href: "https://www.instagram.com/koinustore_dtf/",
+    href: INSTAGRAM_URL,
   },
   {
     id: "tiktok",

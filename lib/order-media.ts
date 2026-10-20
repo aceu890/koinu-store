@@ -1,5 +1,6 @@
 import type { CustomDetails, PrintStamp } from "@/lib/types";
-import { ORDER_ART_BUCKET, isSupabasePublicUrl, uploadPublicFile } from "@/lib/supabase/storage";
+import { putOrderArt } from "@/lib/order-art-store";
+import { isSupabasePublicUrl } from "@/lib/supabase/storage";
 
 const DATA_URL = /^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/i;
 
@@ -11,7 +12,13 @@ function extFor(mime: string) {
 
 function keepUrl(value: string | null | undefined) {
   if (!value) return null;
-  if (value.startsWith("/Stickers/") || value.startsWith("/uploads/")) return value;
+  if (
+    value.startsWith("/Stickers/") ||
+    value.startsWith("/uploads/") ||
+    value.startsWith("/api/orders/media/")
+  ) {
+    return value;
+  }
   if (isSupabasePublicUrl(value)) return value;
   if (value.startsWith("[uploaded]")) return null;
   return null;
@@ -26,14 +33,7 @@ async function saveBytes(bytes: Buffer, mime: string, orderId: string, name: str
       ? "image/webp"
       : "image/jpeg";
 
-  const remote = await uploadPublicFile(
-    ORDER_ART_BUCKET,
-    `orders/${orderId}/${file}`,
-    bytes,
-    contentType,
-  );
-  if (!remote) return null;
-  return remote;
+  return putOrderArt(`orders/${orderId}/${file}`, bytes, contentType);
 }
 
 async function saveDataUrl(dataUrl: string, orderId: string, name: string) {

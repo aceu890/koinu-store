@@ -9,12 +9,12 @@ type BrandLogoProps = {
 export function BrandLogo({ className, size = 88, priority }: BrandLogoProps) {
   return (
     <Image
-      src="/logo.gif"
+      src="/mascota/stickers/logo.webp"
       alt="Koinu Store"
       width={size}
       height={size}
-      unoptimized
       priority={priority}
+      sizes="48px"
       className={`h-full w-full object-contain ${className ?? ""}`}
     />
   );

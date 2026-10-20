@@ -1,4 +1,3 @@
-import { Mascot } from "@/components/mascot";
 import { WHATSAPP_DISPLAY, whatsappHref } from "@/lib/whatsapp";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -11,14 +10,10 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export function WhatsAppCta() {
   return (
-    <section className="mx-auto max-w-6xl px-3 pb-12 sm:px-6 sm:pb-16">
+    <section className="mx-auto max-w-6xl px-3 pb-6 sm:px-6 sm:pb-8">
       <div className="overflow-hidden rounded-2xl border border-[#25D366]/25 bg-[linear-gradient(135deg,#ecfbf1,#f4efe6)] sm:rounded-[2rem] dark:bg-[linear-gradient(135deg,#14241a,#14110f)]">
         <div className="grid items-center gap-6 px-5 py-7 sm:grid-cols-[1fr_auto] sm:gap-8 sm:px-8 sm:py-10">
-          <div className="flex items-start gap-4">
-            <div className="hidden w-24 shrink-0 sm:block">
-              <Mascot name="here" alt="" size={180} />
-            </div>
-            <div className="min-w-0">
+          <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/45 sm:text-xs">
                 Comunícate con nuestros asistentes
               </p>
@@ -30,7 +25,6 @@ export function WhatsAppCta() {
                 <span className="font-semibold text-ink">{WHATSAPP_DISPLAY}</span>. Te
                 respondemos para cerrar el pedido.
               </p>
-            </div>
           </div>
           <a
             href={whatsappHref()}

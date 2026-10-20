@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Star } from "lucide-react";
 import { ProductVisual } from "@/components/product-visual";
-import { Mascot } from "@/components/mascot";
 import { formatPrice } from "@/lib/format";
 import { pastelBackdrop, pastelFill } from "@/lib/pastels";
 import type { Product } from "@/lib/types";
@@ -45,9 +44,9 @@ export function ProductCard({
             className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center p-2.5 transition duration-500 group-hover:scale-110 sm:p-5">
-            <div className="w-[82%] sm:w-[78%]">
-              <ProductVisual product={product} />
+          <div className="absolute inset-0 flex items-center justify-center p-4 transition duration-500 group-hover:scale-105 sm:p-5">
+            <div className="flex h-full w-full items-center justify-center">
+              <ProductVisual product={product} className="max-h-full w-full" />
             </div>
           </div>
         )}
@@ -77,10 +76,7 @@ export function ProductGrid({
   if (!products.length) {
     return (
       <div className="rounded-2xl border border-dashed border-ink/20 p-8 text-center sm:p-10">
-        <div className="mx-auto w-32 sm:w-44">
-          <Mascot name="no-products" alt="Sin productos" size={260} />
-        </div>
-        <p className="mt-3 text-sm text-ink/60">No hay productos en esta categoría todavía.</p>
+        <p className="text-sm text-ink/60">No hay productos aún.</p>
       </div>
     );
   }

@@ -9,7 +9,7 @@ import { formatPrice, kindLabel } from "@/lib/format";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -26,7 +26,7 @@ export default async function ProductPage({ params }: Props) {
     <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2">
       <div className="overflow-hidden rounded-[2rem] bg-mock">
         {product.imageUrl ? (
-          <ProductVisual product={product} className="aspect-square w-full object-cover" />
+          <ProductVisual product={product} className="aspect-square w-full object-contain p-4" />
         ) : (
           <div className="p-8">
             <ProductVisual product={product} />
@@ -47,13 +47,19 @@ export default async function ProductPage({ params }: Props) {
         <div className="mt-6 w-36">
           <Mascot name="questions" alt="¿Tienes dudas? Escríbenos" size={200} />
         </div>
-        <p className="mt-8 text-sm text-ink/55">
-          ¿Quieres este mismo producto con otro texto o imagen?{" "}
-          <Link href="/personalizar" className="font-semibold text-magenta">
-            Personalízalo
-          </Link>
-          .
-        </p>
+        {product.kind === "print3d" ? (
+          <p className="mt-8 text-sm text-ink/55">
+            ¿Lo quieres en otro color o tamaño? Escríbenos por WhatsApp al pedir.
+          </p>
+        ) : (
+          <p className="mt-8 text-sm text-ink/55">
+            ¿Quieres este mismo producto con otro texto o imagen?{" "}
+            <Link href="/personalizar" className="font-semibold text-magenta">
+              Personalízalo
+            </Link>
+            .
+          </p>
+        )}
       </div>
     </div>
   );

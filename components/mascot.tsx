@@ -1,7 +1,5 @@
 import Image from "next/image";
 
-const STICKERS_REV = "20260908c";
-
 const ALIASES: Record<string, string> = {
   thanks: "thank-you",
   vamos: "vamos-mascot",
@@ -21,12 +19,12 @@ export function Mascot({ name, alt, className, priority, size = 320 }: MascotPro
 
   return (
     <Image
-      src={`/mascota/stickers/${file}.png?v=${STICKERS_REV}`}
+      src={`/mascota/stickers/${file}.webp`}
       alt={alt}
       width={size}
       height={size}
       priority={priority}
-      unoptimized
+      sizes={priority ? "320px" : "(max-width: 640px) 80px, 160px"}
       className={`h-auto w-full object-contain ${className ?? ""}`}
     />
   );

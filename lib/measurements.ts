@@ -49,38 +49,37 @@ export const SIZE_CHARTS: Record<ProductKind, GarmentMeasures[]> = {
   ],
 };
 
+const FULL_OBJECT: RectPct = { left: 0, top: 0, width: 100, height: 100 };
+
 export const PRINTABLE_AREA: Record<ProductKind, RectPct> = {
-  shirt: { left: 4, top: 3, width: 92, height: 95 },
-  hoodie: { left: 6, top: 4, width: 88, height: 94 },
-  mug: { left: 38, top: 22, width: 50, height: 58 },
-  tote: { left: 24, top: 38, width: 52, height: 54 },
-  cap: { left: 30, top: 32, width: 40, height: 26 },
-  print3d: { left: 36, top: 56, width: 28, height: 22 },
+  shirt: FULL_OBJECT,
+  hoodie: FULL_OBJECT,
+  mug: FULL_OBJECT,
+  tote: FULL_OBJECT,
+  cap: FULL_OBJECT,
+  print3d: FULL_OBJECT,
 };
 
 export const PRINTABLE_AREA_BACK: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 4, top: 2, width: 92, height: 96 },
-  hoodie: { left: 6, top: 4, width: 88, height: 94 },
+  shirt: FULL_OBJECT,
+  hoodie: FULL_OBJECT,
 };
 
 export const PRINTABLE_AREA_LEFT: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 10, top: 4, width: 80, height: 94 },
-  hoodie: { left: 8, top: 4, width: 84, height: 94 },
+  shirt: FULL_OBJECT,
+  hoodie: FULL_OBJECT,
 };
 
 export const PRINTABLE_AREA_RIGHT: Partial<Record<ProductKind, RectPct>> = {
-  shirt: { left: 10, top: 4, width: 80, height: 94 },
-  hoodie: { left: 8, top: 4, width: 84, height: 94 },
+  shirt: FULL_OBJECT,
+  hoodie: FULL_OBJECT,
 };
 
 export function getPrintableArea(
-  kind: ProductKind,
-  view: PrintSide = "front",
+  _kind?: ProductKind,
+  _view: PrintSide = "front",
 ): RectPct {
-  if (view === "back") return PRINTABLE_AREA_BACK[kind] ?? PRINTABLE_AREA[kind];
-  if (view === "left") return PRINTABLE_AREA_LEFT[kind] ?? PRINTABLE_AREA[kind];
-  if (view === "right") return PRINTABLE_AREA_RIGHT[kind] ?? PRINTABLE_AREA[kind];
-  return PRINTABLE_AREA[kind];
+  return FULL_OBJECT;
 }
 
 export const POSITION_PRESETS: Record<

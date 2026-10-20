@@ -70,7 +70,7 @@ export function Header() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/95 md:bg-paper/90 md:backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 sm:h-16 sm:px-6">
         <div className="flex items-center gap-2">
           <SecretAdminLogo />

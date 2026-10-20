@@ -36,7 +36,7 @@ const STEPS = ["Producto", "Color y talla", "Diseño", "Listo"] as const;
 
 const POSITIONS: { value: PrintPosition; label: string; kinds: ProductKind[] }[] = [
   { value: "chest", label: "Pecho", kinds: ["shirt", "hoodie"] },
-  { value: "center", label: "Centro", kinds: ["shirt", "hoodie", "tote", "cap", "mug", "print3d"] },
+  { value: "center", label: "Centro", kinds: ["shirt", "hoodie", "tote", "cap", "mug"] },
   { value: "back", label: "Espalda", kinds: ["shirt", "hoodie"] },
   { value: "wrap", label: "Envolvente", kinds: ["mug"] },
 ];
@@ -191,10 +191,10 @@ export function CustomizeWizard() {
     const aspect = sticker.width / sticker.height;
     const area = getPrintableArea(kind, view);
     const stage = containerAspect(kind, view);
-    let width = area.width * 0.5;
+    let width = Math.min(28, area.width * 0.28);
     let height = heightFromWidth(width, aspect, stage);
-    if (height > area.height * 0.5) {
-      height = area.height * 0.5;
+    if (height > area.height * 0.32) {
+      height = area.height * 0.32;
       width = widthFromHeight(height, aspect, stage);
     }
     const placement = clampPlacement(

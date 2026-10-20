@@ -1,10 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Box,
   Coffee,
   HardHat,
-  Images,
   Paintbrush,
   Palette,
   Printer,
@@ -12,32 +11,36 @@ import {
   ShoppingBag,
   Sparkles,
 } from "lucide-react";
-import { Mascot } from "@/components/mascot";
 import { WelcomeMascot } from "@/components/welcome-mascot";
-import { ProductGrid } from "@/components/product-card";
-import { ProductMock } from "@/components/product-mock";
+import { GarmentThumb } from "@/components/garment-thumb";
 import { CUSTOMIZABLE_BASES } from "@/lib/catalog";
-import { getFeaturedProducts } from "@/lib/products";
 import { formatPrice } from "@/lib/format";
 import { pastelFill } from "@/lib/pastels";
 import { InstagramStrip } from "@/components/instagram-strip";
 import { WhatsAppCta } from "@/components/whatsapp-cta";
+import { KitsOffers } from "@/components/kits-offers";
+import { HomeFeatured, HomeFeaturedFallback } from "@/components/home-featured";
 import type { ProductKind } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
-const BASE_ICONS: Record<ProductKind, typeof Shirt> = {
+const BASE_ICONS: Partial<Record<ProductKind, typeof Shirt>> = {
   shirt: Shirt,
   hoodie: Shirt,
   mug: Coffee,
   tote: ShoppingBag,
   cap: HardHat,
-  print3d: Box,
 };
 
-export default async function HomePage() {
-  const featured = await getFeaturedProducts();
+const BASE_HOVER_DESIGN: Partial<Record<ProductKind, string>> = {
+  shirt: "/Stickers/anime/thumbs/anime-00.webp",
+  hoodie: "/Stickers/anime/thumbs/one-piece.webp",
+  mug: "/Stickers/infantil/thumbs/infantil-01.webp",
+  tote: "/Stickers/peliculas/thumbs/peliculas-00.webp",
+  cap: "/Stickers/anime/thumbs/anime-04.webp",
+};
 
+export default function HomePage() {
   return (
     <div>
       <section className="relative overflow-hidden">
@@ -82,24 +85,6 @@ export default async function HomePage() {
 
           <div className="relative mx-auto w-full max-w-md">
             <WelcomeMascot />
-            <div className="mt-4 hidden grid-cols-4 gap-2 sm:grid">
-              {(
-                [
-                  { kind: "shirt", color: "#171411", design: "sakura" },
-                  { kind: "mug", color: "#FFFFFF", design: "buenos-dias" },
-                  { kind: "tote", color: "#F5E6C8", design: "mercado" },
-                  { kind: "hoodie", color: "#F5E6C8", design: "koinu" },
-                ] as const
-              ).map((item, index) => (
-                <div
-                  key={item.kind}
-                  className="rounded-2xl p-1.5 shadow transition duration-300 hover:-translate-y-1 hover:shadow-md"
-                  style={pastelFill(index)}
-                >
-                  <ProductMock kind={item.kind} color={item.color} design={item.design} />
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -107,6 +92,8 @@ export default async function HomePage() {
       <div className="pt-2 sm:pt-4">
         <WhatsAppCta />
       </div>
+
+      <KitsOffers />
 
       <section className="mx-auto max-w-6xl px-3 py-8 sm:px-6 sm:py-12">
         <div className="flex items-center justify-between gap-3">
@@ -134,7 +121,7 @@ export default async function HomePage() {
 
         <div className="rise-grid mt-4 grid grid-cols-2 gap-2 sm:mt-8 sm:grid-cols-3 sm:gap-4">
           {CUSTOMIZABLE_BASES.map((base, index) => {
-            const Icon = BASE_ICONS[base.slug];
+            const Icon = BASE_ICONS[base.slug] ?? Shirt;
             return (
               <Link
                 key={base.slug}
@@ -142,14 +129,18 @@ export default async function HomePage() {
                 className="group flex flex-col overflow-hidden rounded-xl border border-ink/10 bg-surface shadow-[0_1px_2px_rgba(22,18,15,0.07)] transition duration-300 hover:-translate-y-1.5 hover:border-magenta hover:shadow-[0_14px_28px_rgba(255,61,127,0.16)] sm:rounded-3xl"
               >
                 <div
-                  className="relative flex aspect-square items-center justify-center overflow-hidden px-3 py-3 sm:aspect-4/5 sm:px-5 sm:py-4"
+                  className="relative flex aspect-square items-center justify-center overflow-hidden px-4 py-4 sm:px-5 sm:py-5"
                   style={pastelFill(index)}
                 >
                   <span className="absolute left-2 top-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-white/85 text-ink shadow-sm sm:left-3 sm:top-3 sm:h-9 sm:w-9">
                     <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>
                   <div className="w-[78%] transition duration-500 group-hover:scale-110 group-hover:-rotate-2">
-                    <ProductMock kind={base.slug} color={base.colors[0].hex} hidePrint />
+                    <GarmentThumb
+                      kind={base.slug}
+                      color={base.colors[0].hex}
+                      designSrc={BASE_HOVER_DESIGN[base.slug]}
+                    />
                   </div>
                   <span className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-linear-to-t from-ink/25 to-transparent pb-2.5 pt-8 opacity-0 transition duration-300 group-hover:opacity-100 sm:pb-3.5">
                     <span className="bg-personaliza inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white sm:px-3 sm:text-xs">
@@ -182,30 +173,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-3 pb-12 sm:px-6 sm:pb-20">
-        <div className="mb-4 flex items-end justify-between gap-3 sm:mb-6 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="hidden w-32 sm:block">
-              <Mascot name="featured" alt="Productos destacados" size={200} />
-            </div>
-            <div>
-              <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-ink/50 sm:text-xs">
-                <Images className="h-3.5 w-3.5 text-magenta" />
-                Galería
-              </p>
-              <h2 className="font-display text-xl font-bold sm:text-3xl">Ya hechos, listos para llevar</h2>
-            </div>
-          </div>
-          <Link
-            href="/galeria"
-            className="group/link inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-magenta"
-          >
-            Ver todos
-            <ArrowRight className="h-4 w-4 transition group-hover/link:translate-x-0.5" />
-          </Link>
-        </div>
-        <ProductGrid products={featured} pastel="solid" />
-      </section>
+      <Suspense fallback={<HomeFeaturedFallback />}>
+        <HomeFeatured />
+      </Suspense>
 
       <InstagramStrip />
     </div>

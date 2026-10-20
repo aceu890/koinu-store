@@ -23,6 +23,7 @@ export type ProductMockProps = {
   stamps?: PrintStamp[];
   view?: PrintSide;
   textPlacement?: PrintPlacement | null;
+  eager?: boolean;
   children?: ReactNode;
 };
 
@@ -599,7 +600,15 @@ function Print3dFinish({ shade }: LayerProps) {
   );
 }
 
-function PhotoGarment({ src, color }: { src: string; color: string }) {
+function PhotoGarment({
+  src,
+  color,
+  eager,
+}: {
+  src: string;
+  color: string;
+  eager?: boolean;
+}) {
   const mask: CSSProperties = {
     WebkitMaskImage: `url(${src})`,
     maskImage: `url(${src})`,
@@ -618,6 +627,9 @@ function PhotoGarment({ src, color }: { src: string; color: string }) {
       <img
         src={src}
         alt=""
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={eager ? "high" : "low"}
         className="absolute inset-0 h-full w-full object-contain mix-blend-multiply"
         style={mask}
       />
@@ -682,6 +694,7 @@ export function ProductMock({
   stamps,
   view: viewProp,
   textPlacement = null,
+  eager,
   children,
 }: ProductMockProps) {
   const uid = useId().replace(/:/g, "");
@@ -725,7 +738,7 @@ export function ProductMock({
       }
     >
       {photo ? (
-        <PhotoGarment src={photo} color={color} />
+        <PhotoGarment src={photo} color={color} eager={eager} />
       ) : (
         <svg viewBox="0 0 280 320" className="h-full w-full overflow-visible">
           <defs>
@@ -825,6 +838,8 @@ export function ProductMock({
         <img
           src={photo}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-contain mix-blend-multiply opacity-40"
           style={{
             WebkitMaskImage: `url(${photo})`,

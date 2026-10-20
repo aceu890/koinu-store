@@ -1,14 +1,27 @@
-import { blobFromDataUrl, fileFromBlob, isDataUrl } from "@/lib/image-client";
+import { blobFromDataUrl, fileFromBlob, isDataUrl, isPublicAsset } from "@/lib/image-client";
 import type { CartItem, CustomDetails, PrintSide, PrintStamp } from "@/lib/types";
 
-async function replaceDataUrl(
+async function replaceUploadable(
   value: string | null | undefined,
   key: string,
   form: FormData,
 ) {
-  if (!isDataUrl(value)) return value ?? null;
-  form.append(key, fileFromBlob(await blobFromDataUrl(value), key));
-  return key;
+  if (!value) return null;
+  if (value.startsWith("http://") || value.startsWith("https://")) return value;
+  if (isDataUrl(value)) {
+    form.append(key, fileFromBlob(await blobFromDataUrl(value), key));
+    return key;
+  }
+  if (isPublicAsset(value)) {
+    const response = await fetch(value);
+    if (!response.ok) return value;
+    const blob = await response.blob();
+    const okType = /image\/(jpeg|jpg|png|webp)/i.test(blob.type) || /\.(jpe?g|png|webp)$/i.test(value);
+    if (!okType) return value;
+    form.append(key, fileFromBlob(blob, key));
+    return key;
+  }
+  return value;
 }
 
 async function persistCustom(custom: CustomDetails, itemIndex: number, form: FormData) {
@@ -18,10 +31,10 @@ async function persistCustom(custom: CustomDetails, itemIndex: number, form: For
       stamps.push({
         ...stamp,
         artworkDataUrl:
-          (await replaceDataUrl(stamp.artworkDataUrl, `i${itemIndex}-art-${index}`, form)) ??
+          (await replaceUploadable(stamp.artworkDataUrl, `i${itemIndex}-art-${index}`, form)) ??
           stamp.artworkDataUrl,
         printFileUrl:
-          (await replaceDataUrl(
+          (await replaceUploadable(
             stamp.printFileUrl ?? stamp.artworkDataUrl,
             `i${itemIndex}-print-${index}`,
             form,
@@ -32,7 +45,7 @@ async function persistCustom(custom: CustomDetails, itemIndex: number, form: For
 
   const previewBySide: Partial<Record<PrintSide, string>> = {};
   for (const [side, url] of Object.entries(custom.previewBySide ?? {})) {
-    const next = await replaceDataUrl(url, `i${itemIndex}-pos-${side}`, form);
+    const next = await replaceUploadable(url, `i${itemIndex}-pos-${side}`, form);
     if (next) previewBySide[side as PrintSide] = next;
   }
 
@@ -41,7 +54,7 @@ async function persistCustom(custom: CustomDetails, itemIndex: number, form: For
     artworkDataUrl:
       stamps[0]?.printFileUrl ??
       stamps[0]?.artworkDataUrl ??
-      (await replaceDataUrl(custom.artworkDataUrl, `i${itemIndex}-art`, form)),
+      (await replaceUploadable(custom.artworkDataUrl, `i${itemIndex}-art`, form)),
     stamps: stamps.length ? stamps : custom.stamps,
     previewBySide: Object.keys(previewBySide).length ? previewBySide : custom.previewBySide,
   };
@@ -67,11 +80,13 @@ export async function persistCartMedia(items: CartItem[]): Promise<CartItem[]> {
     error?: string;
     code?: string;
   };
-  if (data.code === "NO_STORAGE" || response.status === 503) {
-    return prepared;
-  }
   if (!response.ok || !data.urls) {
-    throw new Error(data.error || "No se pudieron guardar las imágenes del diseño");
+    const raw = data.error || "";
+    throw new Error(
+      !raw || raw === "fetch failed" || raw === "Load failed"
+        ? "No se pudieron guardar las fotos del diseño. Inténtalo de nuevo."
+        : raw,
+    );
   }
 
   const urls = data.urls;

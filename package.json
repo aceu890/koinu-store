@@ -10,6 +10,7 @@
     "keep-alive": "node --env-file=.env.local scripts/keep-supabase-alive.mjs"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.13",
     "@supabase/ssr": "^0.12.6",
     "@supabase/supabase-js": "^2.115.0",
     "lucide-react": "^1.42.0",

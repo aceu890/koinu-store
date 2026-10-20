@@ -2,40 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Mascot } from "@/components/mascot";
 
 export function BackToTop() {
   const pathname = usePathname();
   const [show, setShow] = useState(false);
-  const [bottom, setBottom] = useState(20);
 
   useEffect(() => {
-    const footer = document.getElementById("site-footer");
-
     function update() {
-      const wizardOffset =
-        pathname.startsWith("/personalizar") && window.innerWidth < 1024 ? 88 : 20;
-      setShow(window.scrollY > 480);
-      if (!footer) {
-        setBottom(wizardOffset);
-        return;
-      }
-      const rect = footer.getBoundingClientRect();
-      const overlap = window.innerHeight - rect.top;
-      setBottom(overlap > 0 ? overlap + 12 : wizardOffset);
+      setShow(window.scrollY > 640);
     }
-
     update();
     window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [pathname]);
+    return () => window.removeEventListener("scroll", update);
+  }, []);
 
   if (!show) return null;
   if (
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/carrito") ||
     pathname.startsWith("/pedido")
@@ -47,11 +30,10 @@ export function BackToTop() {
     <button
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      style={{ bottom }}
-      className="fixed right-3 z-30 w-14 rounded-2xl bg-panel p-1.5 shadow-lg transition hover:-translate-y-1 sm:right-5 sm:w-[4.75rem] sm:rounded-3xl sm:p-2"
+      className="fixed bottom-5 right-3 z-30 grid h-10 w-10 place-items-center rounded-full bg-panel text-on-panel shadow-lg sm:right-5"
       aria-label="Volver arriba"
     >
-      <Mascot name="volver-arriba" alt="Volver arriba" size={160} />
+      ↑
     </button>
   );
 }

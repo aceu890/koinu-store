@@ -6,6 +6,7 @@ import { KoinuLoader } from "@/components/koinu-loader";
 import { ProductMock } from "@/components/product-mock";
 import { WebpayTrustBlock } from "@/components/webpay-marks";
 import { formatPrice, sideLabel } from "@/lib/format";
+import { cartWhatsAppHref } from "@/lib/whatsapp-order";
 import { useCartStore, useCartTotal } from "@/lib/cart-store";
 import type { CartItem, PrintPlacement, PrintSide } from "@/lib/types";
 import { PRINT_SIDES } from "@/lib/types";
@@ -182,6 +183,20 @@ export function CartView() {
         >
           Continuar al pago
         </Link>
+        <a
+          href={cartWhatsAppHref(items, total)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 font-display font-bold text-white transition hover:bg-[#1ebe57]"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden>
+            <path d="M12.04 2c-5.5 0-9.96 4.45-9.96 9.94 0 1.75.46 3.46 1.33 4.97L2 22l5.24-1.37A9.94 9.94 0 0 0 12.04 22c5.5 0 9.96-4.46 9.96-9.96C22 6.45 17.54 2 12.04 2Zm5.8 14.16c-.24.68-1.4 1.25-1.94 1.33-.5.07-1.12.1-1.81-.11-.42-.13-.95-.31-1.64-.61-2.89-1.25-4.77-4.16-4.92-4.35-.14-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.01-2.41.26-.29.57-.36.76-.36h.54c.17 0 .41-.07.64.49.24.58.8 2 .87 2.14.07.14.12.31.02.5-.1.2-.14.31-.28.48-.14.16-.3.37-.42.49-.14.14-.28.29-.12.56.16.28.7 1.16 1.5 1.88 1.04.93 1.91 1.22 2.18 1.36.28.13.43.11.6-.07.16-.17.7-.81.89-1.09.19-.28.37-.23.63-.14.26.1 1.64.77 1.92.91.28.14.47.21.54.33.07.12.07.68-.17 1.36Z" />
+          </svg>
+          Comprar por WhatsApp
+        </a>
+        <p className="mt-2 text-center text-[11px] leading-relaxed text-on-panel/50">
+          Se envían talla, color y ubicación. Las fotos del diseño las adjuntas tú en el chat.
+        </p>
         <div className="mt-4">
           <WebpayTrustBlock onDark compact />
         </div>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ORDER_ART_BUCKET, uploadPublicFile } from "@/lib/supabase/storage";
+import { putOrderArt } from "@/lib/order-art-store";
 
 const ALLOWED = new Map([
   ["image/jpeg", "jpg"],
@@ -41,28 +41,16 @@ export async function POST(request: Request) {
     const bytes = Buffer.from(await file.arrayBuffer());
 
     try {
-      const remote = await uploadPublicFile(
-        ORDER_ART_BUCKET,
+      urls[key] = await putOrderArt(
         `checkout/${batch}/${name}`,
         bytes,
         file.type || `image/${ext === "jpg" ? "jpeg" : ext}`,
       );
-      if (!remote) {
-        return NextResponse.json(
-          {
-            error:
-              process.env.NODE_ENV === "production"
-                ? "No se pudieron guardar las imágenes. Inténtalo de nuevo."
-                : "Falta SUPABASE_SERVICE_ROLE_KEY en el servidor. En Netlify: Site configuration → Environment variables.",
-            code: "NO_STORAGE",
-          },
-          { status: 503 },
-        );
-      }
-      urls[key] = remote;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo subir a Storage";
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch {
+      return NextResponse.json(
+        { error: "No se pudieron guardar las fotos del diseño. Inténtalo de nuevo." },
+        { status: 500 },
+      );
     }
   }
 

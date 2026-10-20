@@ -1,9 +1,10 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { createClient } from "@supabase/supabase-js";
 import { PRODUCTS } from "@/lib/catalog";
 import { slugify } from "@/lib/format";
 import { createServiceSupabase } from "@/lib/supabase/admin";
-import { createServerSupabase } from "@/lib/supabase/server";
 import type {
   AdminOrder,
   AdminOrderItem,
@@ -127,18 +128,50 @@ function toProductRow(product: Product) {
   };
 }
 
-async function catalogProducts(): Promise<Product[]> {
-  const supabase = await createServerSupabase();
-  if (!supabase) return PRODUCTS.map(normalizeProduct);
+const PRODUCT_CACHE_TAG = "store-products";
+const CATALOG_TIMEOUT_MS = 2500;
 
-  const { data, error } = await supabase
+function touchProductCache() {
+  revalidateTag(PRODUCT_CACHE_TAG, "max");
+}
+
+async function fetchRemoteCatalog(): Promise<Product[] | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (!url || !key) return null;
+
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const query = supabase
     .from("products")
     .select("*")
     .order("featured", { ascending: false })
     .order("name");
 
-  if (error || !data?.length) return PRODUCTS.map(normalizeProduct);
+  const timedOut = new Promise<{ data: null; error: { message: string } }>((resolve) => {
+    setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), CATALOG_TIMEOUT_MS);
+  });
+
+  const { data, error } = await Promise.race([query, timedOut]);
+  if (error || !data?.length) return null;
   return (data as ProductRow[]).map(mapProductRow);
+}
+
+const getCachedRemoteCatalog = unstable_cache(fetchRemoteCatalog, ["remote-catalog-v1"], {
+  revalidate: 60,
+  tags: [PRODUCT_CACHE_TAG],
+});
+
+async function catalogProducts(): Promise<Product[]> {
+  const local = PRODUCTS.map(normalizeProduct);
+  const remote = await getCachedRemoteCatalog();
+  if (!remote?.length) return local;
+  const slugs = new Set(remote.map((product) => product.slug));
+  return [...remote, ...local.filter((product) => !slugs.has(product.slug))];
 }
 
 export async function listStoreProducts(options?: { includeHidden?: boolean }) {
@@ -242,6 +275,7 @@ export async function createStoreProduct(input: ProductInput) {
       .select("*")
       .single();
     if (error) throw new Error(error.message);
+    touchProductCache();
     return mapProductRow(data as ProductRow);
   }
 
@@ -251,6 +285,7 @@ export async function createStoreProduct(input: ProductInput) {
   }
   store.products.push(product);
   await writeStore(store);
+  touchProductCache();
   return product;
 }
 
@@ -263,7 +298,10 @@ export async function updateStoreProduct(id: string, input: ProductInput) {
       .eq("id", id)
       .select("*")
       .single();
-    if (!error && data) return mapProductRow(data as ProductRow);
+    if (!error && data) {
+      touchProductCache();
+      return mapProductRow(data as ProductRow);
+    }
   }
 
   const store = await readStore();
@@ -277,6 +315,7 @@ export async function updateStoreProduct(id: string, input: ProductInput) {
   ];
   store.deletedProductIds = store.deletedProductIds.filter((value) => value !== id && value !== existing.slug);
   await writeStore(store);
+  touchProductCache();
   return next;
 }
 
@@ -285,6 +324,7 @@ export async function deleteStoreProduct(id: string) {
   if (service) {
     const { error } = await service.from("products").delete().eq("id", id);
     if (error) throw new Error(error.message);
+    touchProductCache();
     return;
   }
 
@@ -292,6 +332,7 @@ export async function deleteStoreProduct(id: string) {
   store.products = store.products.filter((item) => item.id !== id);
   if (!store.deletedProductIds.includes(id)) store.deletedProductIds.push(id);
   await writeStore(store);
+  touchProductCache();
 }
 
 function mapOrderStatus(value: string | null | undefined): OrderStatus {
