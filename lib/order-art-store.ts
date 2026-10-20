@@ -23,11 +23,15 @@ function mimeFromName(objectPath: string, fallback = "image/jpeg") {
   return fallback;
 }
 
+function toArrayBuffer(bytes: Buffer): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
+
 async function saveBlobs(objectPath: string, bytes: Buffer, contentType: string) {
   try {
     const { getStore } = await import("@netlify/blobs");
     const store = getStore("order-art");
-    await store.set(objectPath, bytes, { metadata: { contentType } });
+    await store.set(objectPath, toArrayBuffer(bytes), { metadata: { contentType } });
     return true;
   } catch {
     return false;
