@@ -1,44 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Coffee,
-  HardHat,
-  Paintbrush,
-  Palette,
-  Printer,
-  Shirt,
-  ShoppingBag,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Printer, Sparkles } from "lucide-react";
 import { WelcomeMascot } from "@/components/welcome-mascot";
-import { GarmentThumb } from "@/components/garment-thumb";
-import { CUSTOMIZABLE_BASES } from "@/lib/catalog";
-import { formatPrice } from "@/lib/format";
-import { pastelFill } from "@/lib/pastels";
 import { InstagramStrip } from "@/components/instagram-strip";
 import { WhatsAppCta } from "@/components/whatsapp-cta";
 import { KitsOffers } from "@/components/kits-offers";
+import { HomeBases } from "@/components/home-bases";
 import { HomeFeatured, HomeFeaturedFallback } from "@/components/home-featured";
-import type { ProductKind } from "@/lib/types";
 
 export const revalidate = 60;
-
-const BASE_ICONS: Partial<Record<ProductKind, typeof Shirt>> = {
-  shirt: Shirt,
-  hoodie: Shirt,
-  mug: Coffee,
-  tote: ShoppingBag,
-  cap: HardHat,
-};
-
-const BASE_HOVER_DESIGN: Partial<Record<ProductKind, string>> = {
-  shirt: "/Stickers/anime/thumbs/anime-00.webp",
-  hoodie: "/Stickers/anime/thumbs/one-piece.webp",
-  mug: "/Stickers/infantil/thumbs/infantil-01.webp",
-  tote: "/Stickers/peliculas/thumbs/peliculas-00.webp",
-  cap: "/Stickers/anime/thumbs/anime-04.webp",
-};
 
 export default function HomePage() {
   return (
@@ -95,83 +65,7 @@ export default function HomePage() {
 
       <KitsOffers />
 
-      <section className="mx-auto max-w-6xl px-3 py-8 sm:px-6 sm:py-12">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/45 sm:text-xs">
-              <Palette className="h-3.5 w-3.5 text-magenta" />
-              Empieza aquí
-            </p>
-            <h2 className="mt-0.5 font-display text-xl font-bold tracking-tight sm:mt-1 sm:text-3xl">
-              Bases para personalizar
-            </h2>
-            <p className="mt-0.5 hidden max-w-sm text-sm leading-relaxed text-ink/60 sm:mt-1 sm:block">
-              Elige la prenda e ingresa al editor. Color, talla y diseño van después.
-            </p>
-          </div>
-          <Link
-            href="/personalizar"
-            className="bg-personaliza group/cta hidden shrink-0 items-center justify-center gap-2 rounded-full px-5 py-3 font-display text-sm font-bold text-white sm:inline-flex"
-          >
-            <Paintbrush className="h-4 w-4" />
-            Ir a personalizar
-            <ArrowRight className="h-4 w-4 transition group-hover/cta:translate-x-0.5" />
-          </Link>
-        </div>
-
-        <div className="rise-grid mt-4 grid grid-cols-2 gap-2 sm:mt-8 sm:grid-cols-3 sm:gap-4">
-          {CUSTOMIZABLE_BASES.map((base, index) => {
-            const Icon = BASE_ICONS[base.slug] ?? Shirt;
-            return (
-              <Link
-                key={base.slug}
-                href="/personalizar"
-                className="group flex flex-col overflow-hidden rounded-xl border border-ink/10 bg-surface shadow-[0_1px_2px_rgba(22,18,15,0.07)] transition duration-300 hover:-translate-y-1.5 hover:border-magenta hover:shadow-[0_14px_28px_rgba(255,61,127,0.16)] sm:rounded-3xl"
-              >
-                <div
-                  className="relative flex aspect-square items-center justify-center overflow-hidden px-4 py-4 sm:px-5 sm:py-5"
-                  style={pastelFill(index)}
-                >
-                  <span className="absolute left-2 top-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-white/85 text-ink shadow-sm sm:left-3 sm:top-3 sm:h-9 sm:w-9">
-                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  </span>
-                  <div className="w-[78%] transition duration-500 group-hover:scale-110 group-hover:-rotate-2">
-                    <GarmentThumb
-                      kind={base.slug}
-                      color={base.colors[0].hex}
-                      designSrc={BASE_HOVER_DESIGN[base.slug]}
-                    />
-                  </div>
-                  <span className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-linear-to-t from-ink/25 to-transparent pb-2.5 pt-8 opacity-0 transition duration-300 group-hover:opacity-100 sm:pb-3.5">
-                    <span className="bg-personaliza inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white sm:px-3 sm:text-xs">
-                      Personalizar
-                      <ArrowRight className="h-3 w-3" />
-                    </span>
-                  </span>
-                </div>
-                <div className="flex flex-1 flex-col px-2 py-2 sm:px-4 sm:py-3.5">
-                  <p className="font-display text-sm font-bold leading-tight transition group-hover:text-magenta sm:text-lg">
-                    {base.name}
-                  </p>
-                  <p className="mt-0.5 text-[12px] text-ink/55 sm:mt-1 sm:text-sm">
-                    desde {formatPrice(base.basePrice)}
-                  </p>
-                  <div className="mt-1.5 hidden flex-wrap gap-1.5 sm:mt-3 sm:flex">
-                    {base.colors.slice(0, 6).map((color) => (
-                      <span
-                        key={color.hex}
-                        className="h-3.5 w-3.5 rounded-full border border-ink/15 transition group-hover:scale-110"
-                        style={{ background: color.hex }}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      <HomeBases />
 
       <Suspense fallback={<HomeFeaturedFallback />}>
         <HomeFeatured />

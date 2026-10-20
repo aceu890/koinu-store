@@ -9,15 +9,17 @@ export function ProductCard({
   product,
   pastelIndex,
   pastelMode = "gradient",
+  className,
 }: {
   product: Product;
   pastelIndex?: number;
   pastelMode?: "gradient" | "solid";
+  className?: string;
 }) {
   return (
     <Link
       href={`/producto/${product.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-xl border border-ink/8 bg-surface shadow-[0_1px_2px_rgba(22,18,15,0.07)] transition duration-300 hover:-translate-y-1.5 hover:border-magenta hover:shadow-[0_14px_28px_rgba(255,61,127,0.16)] sm:rounded-2xl"
+      className={`group flex h-full flex-col overflow-hidden rounded-xl border border-ink/8 bg-surface shadow-[0_1px_2px_rgba(22,18,15,0.07)] transition duration-300 hover:-translate-y-1.5 hover:border-magenta hover:shadow-[0_14px_28px_rgba(255,61,127,0.16)] sm:rounded-2xl ${className ?? ""}`}
     >
       <div
         className={`relative aspect-square overflow-hidden ${pastelIndex == null ? "bg-mock" : ""}`}
@@ -69,9 +71,11 @@ export function ProductCard({
 export function ProductGrid({
   products,
   pastel,
+  mobileLimit,
 }: {
   products: Product[];
   pastel?: boolean | "gradient" | "solid";
+  mobileLimit?: number;
 }) {
   if (!products.length) {
     return (
@@ -91,6 +95,7 @@ export function ProductGrid({
           product={product}
           pastelIndex={pastelMode ? index : undefined}
           pastelMode={pastelMode}
+          className={mobileLimit && index >= mobileLimit ? "max-sm:hidden" : undefined}
         />
       ))}
     </div>

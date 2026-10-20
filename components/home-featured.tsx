@@ -24,7 +24,7 @@ export async function HomeFeatured() {
           <ArrowRight className="h-4 w-4 transition group-hover/link:translate-x-0.5" />
         </Link>
       </div>
-      <ProductGrid products={featured} pastel="solid" />
+      <ProductGrid products={featured} pastel="solid" mobileLimit={4} />
     </section>
   );
 }
@@ -34,8 +34,11 @@ export function HomeFeaturedFallback() {
     <section className="mx-auto max-w-6xl px-3 pb-12 sm:px-6 sm:pb-20">
       <div className="mb-4 h-10 w-48 rounded-lg bg-ink/5 sm:mb-6" />
       <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3">
-        {Array.from({ length: 9 }, (_, index) => (
-          <div key={index} className="aspect-square rounded-xl bg-ink/5 sm:rounded-2xl" />
+        {Array.from({ length: 6 }, (_, index) => (
+          <div
+            key={index}
+            className={`aspect-square rounded-xl bg-ink/5 sm:rounded-2xl ${index >= 4 ? "max-sm:hidden" : ""}`}
+          />
         ))}
       </div>
     </section>

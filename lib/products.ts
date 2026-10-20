@@ -21,8 +21,8 @@ export const getFeaturedProducts = unstable_cache(
   async () => {
     const products = (await listStoreProducts()).filter(hasProductPhoto);
     const featured = products.filter((product) => product.featured);
-    return (featured.length ? featured : products).slice(0, 9);
+    return (featured.length ? featured : products).slice(0, 6);
   },
-  ["featured-products-v1"],
+  ["featured-products-v2"],
   { revalidate: 60, tags: ["store-products"] },
 );

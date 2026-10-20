@@ -26,12 +26,14 @@ export function GarmentThumb({
   eager,
   className,
   designSrc,
+  designOn = false,
 }: {
   kind: ProductKind;
   color: string;
   eager?: boolean;
   className?: string;
   designSrc?: string;
+  designOn?: boolean;
 }) {
   const photo = getProductPhoto(kind, "front");
   const meta = getProductPhotoMeta(kind, "front");
@@ -62,7 +64,9 @@ export function GarmentThumb({
       />
       {designSrc ? (
         <div
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          className={`pointer-events-none absolute inset-0 origin-center transition-[opacity,transform] duration-700 ease-in-out ${
+            designOn ? "scale-100 opacity-100" : "scale-[0.94] opacity-0"
+          }`}
           style={mask}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
